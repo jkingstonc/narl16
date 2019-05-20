@@ -29,14 +29,15 @@ The following available registers are:
 The memory layout is as follows:
 --------------------------------
 
+
+--------------------------
+|  \/ stack:  0xE000     |
 |------------------------|
-|  /\ graph: 0x          |
+|  /\ heap:   0x7000     |
 |------------------------|
-|  \/ stack: 0x          |
+|  /\ Static: 0x6000     |
 |------------------------|
-|  /\ heap:  0x          |
-|------------------------|
-|  /\ text:  0x          |
+|  /\ text:   0x2000     |
 |------------------------|
 |     System Reserved    |
 
@@ -153,3 +154,4 @@ Graphics
 ========
 
 * The graphics supports 640x480 pixels, 8 bits for the character and 8 bits for colour
+* NARL16 mapped memory doesn't include IO mapped memory, meaning data must be written directly to the external device memory
