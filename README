@@ -24,14 +24,14 @@ NARL16 is capable of addressing 2^16 memory indexes
 The following available registers are:
 --------------------------------------
 
-* $pc $sp $ia $cr $r1-12
+* pc sp ia cr r1-12
 * program counter, stack pointer, interupt address, cause register, registers 1-12
 
 The memory layout is as follows:
 --------------------------------
 
 --------------------------
-|   /\ Graph: 0xF000     |
+|  /\ video:  0xF000     |
 |------------------------|
 |  \/ stack:  0xE000     |
 |------------------------|
@@ -155,5 +155,6 @@ Error codes:
 Graphics
 ========
 
-* NARL16 has a memory mapped region for graphics memory starting at base address 0xF000
-* As
+* NARL16 has a memory mapped region for video memory starting at base address 0xF000
+* As video memory can support 4096 individual pixels, the maximum resolution size a 
+connected monitor can be is [in 4:3 aspect ratio] is 64 x 48
