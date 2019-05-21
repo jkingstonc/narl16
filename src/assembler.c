@@ -82,7 +82,11 @@ int check_is_mem(char * str)
         char * mem_num=str;
         mem_num++;
         mem_num[strlen(mem_num)-2]=0;
+
+        // Check whether the address is a number, register value, or stack function
         if(check_is_int(mem_num) != -1) return 1;
+        if(get_reg_index(mem_num) != -1) return 2;
+        if(check_is_stackfunc(mem_num) != -1) return 3;
     }
     return -1;
 }
@@ -164,13 +168,20 @@ int get_xy_val(char * xy, short * s, unsigned short * us)
     char *ptr;
     if(strtod(xy,&ptr)!=0) return 22;
 
-    if(check_is_mem(xy)!=-1)
+    int mem=check_is_mem(xy);
+    if(mem!=-1)
     {
-        char * mem_num=xy;
-        mem_num++;
-        mem_num[strlen(mem_num)-2]=0;
-        *s = atoi(mem_num);
-        return 23;
+        char * mem_addr=xy;
+        mem_addr++;
+        mem_addr[strlen(mem_addr)]=0;
+        printf("%s\n",mem_addr);
+        printf("%d\n", mem);
+        switch(mem)
+        {
+            case 1: {*s = atoi(mem_addr); return 23; }
+            case 2: {*s = get_reg_index(mem_addr); return 24; } 
+            case 3: {*s = check_is_stackfunc(mem_addr); return 25; } 
+        }
     }
     return 0;
 }
