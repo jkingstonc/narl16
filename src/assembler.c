@@ -4,6 +4,7 @@ assembler.c
 This file takes a .narl file as an input and assembles it to a binary
 */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,6 +42,19 @@ int get_reg_index(char *reg){
 	}
 	return -1;
 } 
+
+int check_is_int(char * str)
+{
+    printf("%s\n",str);
+    int i;
+    for(i=0;i<strlen(str);i++)
+    {
+        printf("meme\n");
+        // not a digit
+        if(isdigit(str[i])==0) return -1;
+    }
+    return atoi(str); 
+}
 
 void remove_spaces(char* source)
 {
@@ -108,6 +122,13 @@ int get_xy_val(char * xy)
             return 17+i;
         }
     }
+    // check for immediate types
+    // signed int
+    if(check_is_int(xy)!=-1) return 20;
+    // unsigned int
+    // floating point
+    char *ptr;
+    if(strtod(xy,&ptr)!=0) return 22;
     return 0;
 }
 
