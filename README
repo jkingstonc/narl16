@@ -59,14 +59,19 @@ Lower -> high bits:
 
 x & y can be a specifier for a register, memory address or an immediate value.
 
-* 0-16 maps to registers
-* 17 maps to push
-* 18 maps to pop
-* 19 maps to peek
-* 20 maps to signed immediate
-* 21 maps to unsigned immediate
-* 22 maps to half precision IEE754 floating point
-* 23 maps to memory
+The ranges below specify what value range means in the xy position [# means an extra word is required for the x/y value]
+
+*  0-16 maps to registers
+*  17 maps to push
+*  18 maps to pop
+*  19 maps to peek
+*# 20 maps to signed immediate
+*# 21 maps to unsigned immediate
+*# 22 maps to half precision IEE754 floating point
+*# 23 maps to memory immediate
+*# 24 maps to memory register contents
+*# 25 maps to memory stack operation
+
 
 The next instruction after (when a numeric value is required) will be a full-word immediate value
 
