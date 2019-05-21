@@ -11,7 +11,7 @@ This file takes a .narl file as an input and assembles it to a binary
 
 
 #define TEXT_ADDR 0x2000
-#define MAX_REG 12
+#define MAX_REG 16
 #define MAX_PROG_LEN 256
 #define MAX_LINE_LEN 128
 #define MAX_OP 28
@@ -37,19 +37,31 @@ int get_reg_index(char *reg){
 	int i;
 	for(i=0;i<MAX_REG;i++){
 		if(!strcmp(reg,reg_str[i])){
-			return(i);
+			return i;
 		}
 	}
 	return -1;
 } 
 
+int check_is_stackfunc(char * str)
+{
+    int i;
+    for (i=0;i<MAX_XY_FUNCS;i++)
+    {
+        if(strcmp(str, xy_funcs[i])==0)
+        {
+            // PSH, POP, PEK encoding starts at 17
+            return 17+i;
+        }
+    }
+    return -1;
+}
+
 int check_is_int(char * str)
 {
-    printf("%s\n",str);
     int i;
     for(i=0;i<strlen(str);i++)
     {
-        printf("meme\n");
         // not a digit
         if(isdigit(str[i])==0) return -1;
     }
@@ -114,25 +126,27 @@ int get_op_val(char * op)
     return -1;
 }
 
-int get_xy_val(char * xy)
+int get_xy_val(char * xy, short * s, unsigned short * us)
 {
     // Check if xy is in registers
     if(get_reg_index(xy)!=-1) return get_reg_index(xy);
+
     // Check if xy is in xy_funcs
-    int i;
-    for (i=0;i<MAX_XY_FUNCS;i++)
-    {
-        if(strcmp(xy, xy_funcs[i])==0)
-        {
-            // PSH, POP, PEK encoding starts at 17
-            return 17+i;
-        }
-    }
+    if (check_is_stackfunc(xy)!=-1) return check_is_stackfunc(xy);
+
     // check for immediate types
     // signed int
-    if(check_is_int(xy)!=-1) return 20;
+    if(check_is_int(xy)!=-1) 
+    {
+        *s=atoi(xy);
+        return 20;
+    }
     // unsigned int
-    if(check_is_uint(xy)!=-1) return 21;
+    if(check_is_uint(xy)!=-1) 
+    {
+        *s=atoi(xy);
+        return 21;
+    }
     // floating point
     char *ptr;
     if(strtod(xy,&ptr)!=0) return 22;
@@ -159,8 +173,11 @@ int make_bytecode()
 
         while(next != NULL)
         {
+            short s;
+            unsigned short us;
+
             // Get the value that should be inserted into the oxy position
-            int val = (counter==0) ? get_op_val(next) : get_xy_val(next);
+            int val = (counter==0) ? get_op_val(next) : get_xy_val(next,&s,&us);
             // Get the bit position in the bytecode that it should be inserted into
             int bit_position = (counter==0) ? 0 : 6+(5*(counter-1));
             // Set the bytecode bits
