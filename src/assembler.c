@@ -6,13 +6,58 @@ This file takes a .narl file as an input and assembles it to a binary
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+
+#define TEXT_ADDR 0x2000
+#define MAX_REG 12
+#define MAX_PROG_LEN 256
+#define MAX_LINE_LEN 128
 
 // Strings corresponding to indexes in the registers
 const char *reg_str[] = {"pc", "sp", "ia", "cr", "r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12"};
+// The program string
+char prog[MAX_PROG_LEN][MAX_LINE_LEN];
 
-#define MAX_REG 12
+// Get a register index from a register char... this should be a macro
+int get_reg_index(char *reg){
+	int i;
+	for(i=0;i<MAX_REG;i++){
+		if(!strcmp(reg,reg_str[i])){
+			return(i);
+		}
+	}
+	return(-1);
+} 
 
-int main()
+int load_prog(char* prog_name)
 {
-    printf("%d\n", GET_REG_INDEX("sp"));
+	FILE * file = NULL;
+	file = fopen(prog_name,"r");
+	int line_counter=0;
+	// Loop through each file line and add it to the prog array
+	while(fgets(prog[line_counter],MAX_LINE_LEN,file))
+	{
+		// Add a null terminator to the line string
+		prog[line_counter][strlen(prog[line_counter])-1]='\0';
+		line_counter++;
+	}
+	int i;
+	for(i=0;i<line_counter;i++)
+	{
+		printf("%s\n", prog[i]);
+	}
+    return 0;
+}
+
+int make_bytecode()
+{
+    return 0;
+}
+
+int main(int argc, char *argv[])
+{
+    load_prog(argv[1]);
+    make_bytecode();
+    return 0;
 }
