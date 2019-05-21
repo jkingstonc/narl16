@@ -161,7 +161,7 @@ int get_xy_val(char * xy, short * s, unsigned short * us)
     // unsigned int
     if(check_is_uint(xy)!=-1) 
     {
-        *s=atoi(xy);
+        *us=atoi(++xy);
         return 21;
     }
     // floating point
@@ -174,8 +174,6 @@ int get_xy_val(char * xy, short * s, unsigned short * us)
         char * mem_addr=xy;
         mem_addr++;
         mem_addr[strlen(mem_addr)]=0;
-        printf("%s\n",mem_addr);
-        printf("%d\n", mem);
         switch(mem)
         {
             case 1: {*s = atoi(mem_addr); return 23; }
@@ -206,15 +204,17 @@ int make_bytecode()
 
         while(next != NULL)
         {
-            short s;
-            unsigned short us;
-
+            // for either x or y, they may need an extra word for an immediate value
+            short s=0;
+            unsigned short us=0;
             // Get the value that should be inserted into the oxy position
             int val = (counter==0) ? get_op_val(next) : get_xy_val(next,&s,&us);
             // Get the bit position in the bytecode that it should be inserted into
             int bit_position = (counter==0) ? 0 : 6+(5*(counter-1));
             // Set the bytecode bits
             bytecode |= (val << bit_position);
+            printf("short:  %d\n", s);
+            printf("ushort: %hu\n", us);
             next = strtok(NULL, " ,");
             counter++;
         }
