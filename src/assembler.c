@@ -53,7 +53,13 @@ int check_is_int(char * str)
         // not a digit
         if(isdigit(str[i])==0) return -1;
     }
-    return atoi(str); 
+    return 1;
+}
+
+int check_is_uint(char * str)
+{
+    if(str[0]=='u' && check_is_int(++str)) return 1;
+    return -1;
 }
 
 void remove_spaces(char* source)
@@ -126,6 +132,7 @@ int get_xy_val(char * xy)
     // signed int
     if(check_is_int(xy)!=-1) return 20;
     // unsigned int
+    if(check_is_uint(xy)!=-1) return 21;
     // floating point
     char *ptr;
     if(strtod(xy,&ptr)!=0) return 22;
