@@ -74,6 +74,19 @@ int check_is_uint(char * str)
     return -1;
 }
 
+int check_is_mem(char * str)
+{
+    // First check if memory specifier is correct format
+    if(str[0]=='[' && str[strlen(str)-2]==']')
+    {
+        char * mem_num=str;
+        mem_num++;
+        mem_num[strlen(mem_num)-2]=0;
+        if(check_is_int(mem_num) != -1) return 1;
+    }
+    return -1;
+}
+
 void remove_spaces(char* source)
 {
   char* i = source;
@@ -150,6 +163,15 @@ int get_xy_val(char * xy, short * s, unsigned short * us)
     // floating point
     char *ptr;
     if(strtod(xy,&ptr)!=0) return 22;
+
+    if(check_is_mem(xy)!=-1)
+    {
+        char * mem_num=xy;
+        mem_num++;
+        mem_num[strlen(mem_num)-2]=0;
+        *s = atoi(mem_num);
+        return 23;
+    }
     return 0;
 }
 
