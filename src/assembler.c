@@ -32,6 +32,19 @@ int get_reg_index(char *reg){
 	return(-1);
 } 
 
+void remove_spaces(char* source)
+{
+  char* i = source;
+  char* j = source;
+  while(*j != 0)
+  {
+    *i = *j++;
+    if(*i != ' ')
+      i++;
+  }
+  *i = 0;
+}
+
 int load_prog(char* prog_name)
 {
 	FILE * file = NULL;
@@ -53,6 +66,7 @@ int load_prog(char* prog_name)
 	{
 		printf("%s\n", prog[i]);
 	}
+
     return 0;
 }
 
@@ -61,7 +75,15 @@ int make_bytecode()
 	int line_counter;
 	for(line_counter=0;line_counter<MAX_PROG_LEN;line_counter++)
 	{
-		// First check if we have a macro or instruction
+        short byte=0;
+		int counter=0;
+        char * next = strtok(prog[line_counter]," ,");
+        while(next != NULL)
+        {
+            printf("%s\n",next);
+            next = strtok(NULL, " ,");
+        }
+        getchar();
 	}
     return 0;
 }
