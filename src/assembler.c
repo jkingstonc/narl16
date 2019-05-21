@@ -13,15 +13,19 @@ This file takes a .narl file as an input and assembles it to a binary
 #define MAX_REG 12
 #define MAX_PROG_LEN 256
 #define MAX_LINE_LEN 128
-#define OP_COUNT 28
+#define MAX_OP 28
+#define MAX_XY_FUNCS 3
 
+// Strings corresponding to indexes of opcodes
 const char *opcodes[] = 
     {"NOP","SET","ADD","SUB","MUL","DIV","AND","OR","XOR","NOT",
      "MOD", "REM", "SRL", "SLL", "SRA", "SLA", "IEQ", "INE", "IGE", 
      "IGT", "ILT", "ILE", "IBS", "INB", "JAL", "RTN", "SYS", "INT"};
-
 // Strings corresponding to indexes in the registers
 const char *reg_str[] = {"pc", "sp", "ia", "cr", "r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12"};
+// Strings corresponding to xy available stack functions
+const char *xy_funcs[] = {"PSH","POP","PEEK"};
+
 // The program string
 char prog[MAX_PROG_LEN][MAX_LINE_LEN];
 // The assembled binaries
@@ -35,7 +39,7 @@ int get_reg_index(char *reg){
 			return(i);
 		}
 	}
-	return(-1);
+	return -1;
 } 
 
 void remove_spaces(char* source)
@@ -63,7 +67,8 @@ int load_prog(char* prog_name)
 	while(fgets(prog[line_counter],MAX_LINE_LEN,file)!=NULL)
 	{
 		// Add a null terminator to the line string
-		prog[line_counter][strlen(prog[line_counter])-1]='\0';
+        // for some reason the below line causes the bytecode maker not to work :(
+		//prog[line_counter][strlen(prog[line_counter])-1]='\0';
 		line_counter++;
 	}
 	int i;
@@ -76,47 +81,66 @@ int load_prog(char* prog_name)
     return 0;
 }
 
-short get_op_val(char * op)
+int get_op_val(char * op)
 {
     int i;
-    for(i=0;i<OP_COUNT;i++)
+    for(i=0;i<MAX_OP;i++)
     {
         if(strcmp(op, opcodes[i])==0)
         {
-            return (short)i;
+            return i;
         }
     }
     return -1;
 }
 
+int get_xy_val(char * xy)
+{
+    // Check if xy is in registers
+    if(get_reg_index(xy)!=-1) return get_reg_index(xy);
+    // Check if xy is in xy_funcs
+    int i;
+    for (i=0;i<MAX_XY_FUNCS;i++)
+    {
+        if(strcmp(xy, xy_funcs[i])==0)
+        {
+            // PSH, POP, PEK encoding starts at 17
+            return 17+i;
+        }
+    }
+    return 0;
+}
+
 int make_bytecode()
 {
+    prog_assembled=malloc(sizeof(short)*MAX_PROG_LEN);
+    int valid_line_counter=0;
 	int line_counter;
 	for(line_counter=0;line_counter<MAX_PROG_LEN;line_counter++)
 	{
-        short byte=0;
+        // Check if the line is empty
+        if(prog[line_counter][0] == '\0') continue;
+        printf("line: %s\n",prog[line_counter]);
+        unsigned short bytecode=0;
         int counter=0;
-        // allocate enough space for 4 words per line
-		char ** line_words = malloc(4*sizeof(char*));
         char * next = strtok(prog[line_counter]," ,");
+
+        // If we are lexing macro
+        if(strcmp(next,"#")==0) {printf("Encountered macro...\n");continue;}
+        // Else lex standard statement
+
         while(next != NULL)
         {
-            // allocate more space for the current next value
-            line_words[counter]=(char*)malloc(sizeof(next));
-            // copy the next value to the array
-            strcpy(line_words[counter],next);
-            // get the next word
+            // Get the value that should be inserted into the oxy position
+            int val = (counter==0) ? get_op_val(next) : get_xy_val(next);
+            // Get the bit position in the bytecode that it should be inserted into
+            int bit_position = (counter==0) ? 0 : 6+(5*(counter-1));
+            // Set the bytecode bits
+            bytecode |= (val << bit_position);
             next = strtok(NULL, " ,");
             counter++;
         }
-        // check if we have encountered a macro
-        if(strcmp(line_words[0],"#")==0)
-        {
-
-        }else
-        {
-
-        }
+        printf("Bytecode: %x\n",bytecode);
 	}
     return 0;
 }
