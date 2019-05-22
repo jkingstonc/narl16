@@ -17,9 +17,9 @@ This file takes a .narl file as an input and assembles it to a binary
 #define MAX_XY_FUNCS 3
 
 // Macro to convert a line number to a text address position
-#define LINE_TO_ADDR (line) (TEXT_ADDR + (line*2))
+#define LINE_TO_ADDR(line) (TEXT_ADDR+((line)*(2)))
 // Macro to convert a text address position to a line number
-#define ADDR_TO_LINE (addr) ((addr-TEXT_ADDR)/2)
+#define ADDR_TO_LINE(addr) (((addr)-(TEXT_ADDR))/2)
 
 typedef struct {
     unsigned short * array;
@@ -39,6 +39,7 @@ const char *xy_funcs[] = {"PSH","POP","PEEK"};
 
 // The program string
 char prog[MAX_PROG_LEN][MAX_LINE_LEN];
+char ** original_prog;
 // The assembled binaries
 BytecodeArray bytecode_array;
 
@@ -171,6 +172,31 @@ int check_is_mem(char * str)
     return -1;
 }
 
+int check_is_label(char * str)
+{
+    char lbl[MAX_LINE_LEN]={0};
+    char * str_cpy=strdup(str);
+    strcat(lbl,"# ");
+    strcat(lbl,str_cpy);
+    lbl[strlen(lbl)]='\0';
+    // Loop over every line and see if it contains a label
+    int i=0;
+    int macro_counter=0;
+    while(i<MAX_PROG_LEN)
+    {
+        // If we are on a macro line, we want to skip it as it doesn't count as an address line
+
+        if(strstr(original_prog[i], lbl) != NULL)
+        {
+            return LINE_TO_ADDR(i-macro_counter);
+        }
+        if(strstr(original_prog[i], "#") != NULL) macro_counter++;
+        i++;
+    }
+    free(str_cpy);
+    return -1;
+}
+
 // Get the x/y value for a given string, and assign the optional extended word values
 int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us_flag)
 {
@@ -217,6 +243,15 @@ int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us
             case 3: {*s = check_is_stackfunc(mem_addr); *s_flag=1; return 25; } 
         }
     }
+
+    // check if xy is a label address
+    if(check_is_label(xy)) 
+    {
+        *us=check_is_label(xy);
+        *us_flag=1; 
+        return 23;
+    }
+
     return -1;
 }
 
@@ -283,6 +318,7 @@ int make_bytecode()
 // Load the program line by line into an array of lines
 int load_prog(char* prog_name)
 {
+    original_prog=malloc(MAX_PROG_LEN * sizeof(char*));
 	FILE * file = NULL;
 	file = fopen(prog_name,"r");
 
@@ -295,6 +331,7 @@ int load_prog(char* prog_name)
 		// Add a null terminator to the line string
         // for some reason the below line causes the bytecode maker not to work :(
 		prog[line_counter][strlen(prog[line_counter])]='\0';
+        original_prog[line_counter]=strdup(prog[line_counter]);
 		line_counter++;
 	}
 	int i;
