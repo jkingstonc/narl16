@@ -16,6 +16,11 @@ This file takes a .narl file as an input and assembles it to a binary
 #define MAX_OP 28
 #define MAX_XY_FUNCS 3
 
+// Macro to convert a line number to a text address position
+#define LINE_TO_ADDR (line) (TEXT_ADDR + (line*2))
+// Macro to convert a text address position to a line number
+#define ADDR_TO_LINE (addr) ((addr-TEXT_ADDR)/2)
+
 typedef struct {
     unsigned short * array;
     size_t used;
@@ -152,13 +157,12 @@ int check_is_uint(char * str)
 int check_is_mem(char * str)
 {
     // First check if memory specifier is correct format
-    if(str[0]=='[' && str[strlen(str)-2]==']')
+    if(str[0]=='[' && str[strlen(str)-1]==']')
     {
         // Get the string without the bracket characters
         char * mem_num=str;
         mem_num++;
-        mem_num[strlen(mem_num)-2]=0;
-
+        mem_num[strlen(mem_num)-1]=0;
         // Check whether the address is a number, register value, or stack function
         if(check_is_int(mem_num) != -1) return 1;
         if(check_reg_index(mem_num) != -1) return 2;
@@ -233,7 +237,7 @@ int make_bytecode()
         // The word we are in on the raw string
         int counter=0;
         // Get the next word
-        char * next = strtok(prog[line_counter]," ,");
+        char * next = strtok(prog[line_counter]," ,\n");
 
         // Check if we are lexing macro
         if(strcmp(next,"#")==0) {continue;}
@@ -260,7 +264,7 @@ int make_bytecode()
             if(temp_s_flag){if(counter==1){sx=temp_s;sx_flag=1;}else if(counter==2){sy=temp_s;sy_flag=1;}}
             if(temp_us_flag){if(counter==1){usx=temp_us;usx_flag=1;}else if(counter==2){usy=temp_us;usy_flag=1;}}
             // Get the next word & increase the counter
-            next = strtok(NULL, " ,");
+            next = strtok(NULL, " ,\n");
             counter++;
         }
         // Insert the bytecode to the bytecode array
@@ -290,7 +294,7 @@ int load_prog(char* prog_name)
 	{
 		// Add a null terminator to the line string
         // for some reason the below line causes the bytecode maker not to work :(
-		//prog[line_counter][strlen(prog[line_counter])-1]='\0';
+		prog[line_counter][strlen(prog[line_counter])]='\0';
 		line_counter++;
 	}
 	int i;
