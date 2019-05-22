@@ -128,15 +128,19 @@ int check_is_stackfunc(char * str)
 // Check if an xy atomic value is a signed integer
 int check_is_int(char * str)
 {
-    // Check if it is in hex format
-    int num = (int)strtol(str, NULL, 16);
-    if(num != 0) return num;
 
     int i;
+    int flag=1;
     // Check if each integer isn't a digit, if so it's not an integer
-    for(i=0;i<strlen(str);i++) if(isdigit(str[i])==0) return 0;
-
-    return atoi(str);
+    for(i=0;i<strlen(str);i++) if(isdigit(str[i])==0) flag = 0;
+    // If we have a valid integer, return it
+    if (flag) return atoi(str);
+    // Check if it is in hex format
+    char * str_cpy=strdup(str);
+    int num = (int)strtol(str_cpy, NULL, 16);
+    if(num != 0) return num;
+    // Else not a number
+    return 0;
 }
 
 // Check if an xy atomic value is an unsigned integer
