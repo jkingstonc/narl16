@@ -15,6 +15,7 @@ This file takes a .narl file as an input and assembles it to a binary
 #define MAX_LINE_LEN 128
 #define MAX_OP 28
 #define MAX_XY_FUNCS 3
+#define COMMENT_CHAR ';'
 
 // Macro to convert a line number to a text address position
 #define LINE_TO_ADDR(line) (TEXT_ADDR+((line)*(2)))
@@ -386,8 +387,13 @@ int load_prog(char* prog_name)
 	while(fgets(prog[line_counter],MAX_LINE_LEN,file)!=NULL)
 	{
         if(prog[line_counter][0]=='\n') break;
+        // Remove comments from the line
+        char *ptr;
+        ptr = strchr(prog[line_counter], COMMENT_CHAR);
+        if (ptr != NULL) {
+            *ptr = '\0';
+        }
 		// Add a null terminator to the line string
-        // for some reason the below line causes the bytecode maker not to work :(
 		prog[line_counter][strlen(prog[line_counter])]='\0';
         original_prog[line_counter]=strdup(prog[line_counter]);
 		line_counter++;
