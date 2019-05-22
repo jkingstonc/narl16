@@ -9,34 +9,18 @@ This file takes a .narl file as an input and assembles it to a binary
 #include <stdlib.h>
 #include <string.h>
 
-#define TEXT_ADDR 0x2000
-#define MAX_REG 16
-#define MAX_PROG_LEN 256
-#define MAX_LINE_LEN 128
-#define MAX_OP 28
-#define MAX_XY_FUNCS 3
+#include "narlcodes.h"
+
 #define COMMENT_CHAR ';'
 
 // Macro to convert a line number to a text address position
 #define LINE_TO_ADDR(line) (TEXT_ADDR+((line)*(2)))
-// Macro to convert a text address position to a line number
-#define ADDR_TO_LINE(addr) (((addr)-(TEXT_ADDR))/2)
 
 typedef struct {
     unsigned short * array;
     size_t used;
     size_t size;
 } BytecodeArray;
-
-// Strings corresponding to indexes of opcodes
-const char *opcodes[] = 
-    {"NOP","SET","ADD","SUB","MUL","DIV","AND","OR","XOR","NOT",
-     "MOD", "REM", "SRL", "SLL", "SRA", "SLA", "IEQ", "INE", "IGE", 
-     "IGT", "ILT", "ILE", "IBS", "INB", "JAL", "RTN", "SYS", "INT"};
-// Strings corresponding to indexes in the registers
-const char *reg_str[] = {"pc", "sp", "ia", "cr", "r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12"};
-// Strings corresponding to xy available stack functions
-const char *xy_funcs[] = {"PSH","POP","PEEK"};
 
 // The program string
 char prog[MAX_PROG_LEN][MAX_LINE_LEN];
