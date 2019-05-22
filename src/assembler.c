@@ -114,7 +114,7 @@ int check_op_index(char * op)
     {
         if(strcmp(op, opcodes[i])==0) return i;
     }
-    return -1;
+    return 0;
 }
 
 // Check if an xy atomic value is a register
@@ -125,7 +125,7 @@ int check_reg_index(char * str){
     {
 		if(!strcmp(str,reg_str[i])) return i;
 	}
-	return -1;
+	return 0;
 } 
 
 // Check if an xy atomic value is a stack operation function
@@ -137,7 +137,7 @@ int check_is_stackfunc(char * str)
         // If the str matches any stack function, return 17 + the index
         if(strcmp(str, xy_funcs[i])==0) return 17+i;
     }
-    return -1;
+    return 0;
 }
 
 // Check if an xy atomic value is a signed integer
@@ -145,7 +145,7 @@ int check_is_int(char * str)
 {
     int i;
     // Check if each integer isn't a digit, if so it's not an integer
-    for(i=0;i<strlen(str);i++) if(isdigit(str[i])==0) return -1;
+    for(i=0;i<strlen(str);i++) if(isdigit(str[i])==0) return 0;
     return 1;
 }
 
@@ -154,7 +154,7 @@ int check_is_uint(char * str)
 {
     // If the string is prefixed with a 'u' and the rest is an integer
     if(str[0]=='u' && check_is_int(++str)) return 1;
-    return -1;
+    return 0;
 }
 
 // Check if an xy atomic value is a memory address
@@ -172,7 +172,7 @@ int check_is_mem(char * str)
         if(check_reg_index(mem_num) != -1) return 2;
         if(check_is_stackfunc(mem_num) != -1) return 3;
     }
-    return -1;
+    return 0;
 }
 
 int check_is_label(char * str)
@@ -197,7 +197,7 @@ int check_is_label(char * str)
         i++;
     }
     free(str_cpy);
-    return -1;
+    return 0;
 }
 
 int check_is_dat(char * str)
@@ -230,20 +230,22 @@ int check_is_dat(char * str)
         }
         i++;
     }
-    return -1;
+    return 0;
 }
 
 // Get the x/y value for a given string, and assign the optional extended word values
 int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us_flag)
 {
     // Check if xy is in registers
-    if(check_reg_index(xy)!=-1) return check_reg_index(xy);
+    int reg = check_reg_index(xy);
+    if(reg) return reg;
 
     // Check if xy is in xy_funcs
-    if (check_is_stackfunc(xy)!=-1) return check_is_stackfunc(xy);
+    int stack_func = check_is_stackfunc(xy);
+    if (stack_func) return stack_func;
 
     // check if xy is a signed int
-    if(check_is_int(xy)!=-1) 
+    if(check_is_int(xy)) 
     {
         *s=atoi(xy);
         *s_flag=1;
@@ -251,7 +253,7 @@ int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us
     }
 
     // check if xy is an unsigned int
-    if(check_is_uint(xy)!=-1) 
+    if(check_is_uint(xy)) 
     {
         *us=atoi(++xy);
         *us_flag=1;
@@ -281,17 +283,19 @@ int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us
     }
 
     // check if xy is a data macro
-    if(check_is_dat(xy)) 
+    int dat = check_is_dat(xy);
+    if(dat) 
     {
-        *s=check_is_dat(xy);
+        *s=dat;
         *s_flag=1; 
         return 20;
     }
 
     // check if xy is a label address
-    if(check_is_label(xy)) 
+    int label=check_is_label(xy);
+    if(label) 
     {
-        *us=check_is_label(xy);
+        *us=label;
         *us_flag=1; 
         return 23;
     }
