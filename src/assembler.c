@@ -285,7 +285,7 @@ int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us
         // Check what type of address specifier we have (immediate, register, stack operation function)
         switch(mem)
         {
-            case 1: {*s = atoi(mem_addr); *s_flag=1; return 23; }
+            case 1: {*s = check_is_int(mem_addr); *s_flag=1; return 23; }
             case 2: {*s = check_reg_index(mem_addr); *s_flag=1; return 24; } 
             case 3: {*s = check_is_stackfunc(mem_addr); *s_flag=1; return 25; } 
         }
