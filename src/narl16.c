@@ -15,8 +15,14 @@ This file is the first standard emulator implementation of the narl16 ISA.
 
 // Macro to get the PC value
 #define GET_PC() (cpu.registers[PC])
+// Macro to get the SP value
+#define GET_SP() (cpu.registers[SP])
 // Macro to increment the PC
 #define INCREMENT_PC(ammount) ((cpu.registers[PC])+=(ammount))
+// Macro to increment the SP
+#define INCREMENT_SP(ammount) ((cpu.registers[SP])+=(ammount))
+// Macro to decrement the SP
+#define DECREMENT_SP(ammount) ((cpu.registers[SP])-=(ammount))
 // Program text
 unsigned short bytecode[MAX_PROG_LEN];
 // Memory is byte addressable
@@ -51,74 +57,158 @@ unsigned short get_next_bytecode()
     return bytecode;
 }
 
-int get_immediate_value(int code, unsigned short * immediate)
+int push_stack(unsigned short value)
 {
+    memory[GET_SP()]=value;
+    // Stack pointer deals in words not bytes [1 word = 2 bytes]
+    INCREMENT_SP(2);
+}
+unsigned short pop_stack()
+{
+    unsigned char value = memory[GET_SP()];
+    // Stack pointer deals in words not bytes [1 word = 2 bytes]
+    DECREMENT_SP(2);
+    return value;
+}
+unsigned short peek_stack()
+{
+    unsigned char value = memory[GET_SP()];
+    return value;
+}
+
+// Either return an immediate value, or a pointer for an immediate location
+int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag)
+{
+    // XY value that doesn't need another extended word
+    if(code>=0 && code <=19)
+    {
+        switch(code)
+        {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
+            case 11:
+            case 12:
+            case 13:
+            case 14: 
+            case 15:
+            case 16:
+            {
+                if(pointer_flag) { *immediate=&cpu.registers[code];}else{ **immediate=cpu.registers[code];}
+                break;
+            } // Registers
+            case 17:
+            {
+                if(pointer_flag) {} else{}
+                break;
+            } // Push
+            case 18:
+            {
+                if(pointer_flag) {}else{ **immediate=pop_stack();}
+                break;
+            } // Pop
+            case 19:
+            {
+                if(pointer_flag) {}else{ **immediate=peek_stack();}
+                break;
+            } // Peek
+        }
+    }
     // Check if the xy value is specifying we are using an extended-word immediate
-    if(code>=20 && code<=25) 
+    else if(code>=20 && code<=25) 
     {
         // Get the next bytecode value
         unsigned short imm=get_next_bytecode();
         switch(code)
         {
             case 20: 
-            {
-                *immediate=imm;
+            {   
+                **immediate=imm;
                 break; 
             } // Signed immediate
             case 21: 
             {
-                *immediate=imm;
+                **immediate=imm;
                 break; 
             } // Unsigned immediate
             case 22: break; // Half prescision IEE 754 fp
             case 23: 
             {
-                * immediate=memory[imm];
+                if(pointer_flag) { *immediate=(unsigned short *)&memory[imm]; } else{ **immediate=memory[imm]; }
                 break;
             } // Memory immediate
             case 24:
             {
-                * immediate=memory[cpu.registers[imm]];
+                if(pointer_flag) { *immediate=(unsigned short *)&memory[cpu.registers[imm]]; } else{ **immediate=memory[cpu.registers[imm]]; }
+                break;
             } // Memory register contents
             case 25:
             {
                 switch(imm)
                 {
-                    case 17: break; // PSH
-                    case 18: break; // POP
-                    case 19: break; // PEK
+                    case 17: 
+                    {
+
+                        break; 
+                    } // PSH
+                    case 18: 
+                    {
+                        if(pointer_flag) { *immediate=(unsigned short *)&memory[pop_stack()]; } else{ **immediate=memory[pop_stack()]; }
+                        break; 
+                    } // POP
+                    case 19: 
+                    {
+                        if(pointer_flag) { *immediate=(unsigned short *)&memory[peek_stack()]; } else{ **immediate=memory[peek_stack()]; }
+                        break;
+                    } // PEK
                 }
-            }
+            } // Memory stack contents
         }
     }
+    return 1;
 }
 
 int execute_prog()
 {
+    int running =1;
     // Run the FDE cycle
-    do
+    while(running && GET_PC()<MEM_SIZE)
     {
         unsigned short bytecode=get_next_bytecode();
-        printf("bytecode: %x\n",bytecode);
-
         // Get the opcode and the x and y values
         unsigned char op=bytecode&0x3F,x=(bytecode>>6)&0x1F,y=(bytecode>>11)&0x1F;
-        unsigned short ximmediate=0,yimmediate=0;
+        unsigned short source_immediate=0,dest_immediate=0;
+        // x is always a destination, and never a value
+        unsigned short * source_pointer=&source_immediate;
+        unsigned short * dest_pointer=&dest_immediate;
 
         // Check if we need an immediate value for x and y, and if so set it
-        get_immediate_value(x, &ximmediate);
-        get_immediate_value(y, &yimmediate);
+        get_immediate_value(x, &source_pointer, 1);
+        get_immediate_value(y, &dest_pointer,0);
 
-        printf("x: %d, xim: %d\n",x,ximmediate);
-        printf("y: %d, yim: %d\n",y,yimmediate);
-        // For each x and y, we need to get the value that it represents
         switch(op)
         {
-            case 0x0: break;
+            case 0x0: {running=0;break;}
             case 0x1: // SET
-            {break;}
+            {
+                *source_pointer=*dest_pointer;
+                printf("new value: %d\n", *source_pointer);
+                break;
+            }
             case 0x2: // ADD
-            {break;}
+            {
+                *source_pointer+=dest_immediate;
+                printf("new value: %d\n", *source_pointer);
+                break;
+            }
             case 0x3: // SUB
             {break;}
             case 0x4: // MUL
@@ -174,7 +264,8 @@ int execute_prog()
 
         // Check if we have reached a NOP
         if(bytecode == 0x0) break;
-    }while(GET_PC()<MEM_SIZE);
+    }
+    print_registers();
     // Free relevant memory
     free(memory);
     return 0;
@@ -205,6 +296,7 @@ int setup_emulator()
     cpu=(Cpu){ .registers={0} };
     cpu.registers[PC]=TEXT_ADDR;
     cpu.registers[SP]=STACK_ADDR;
+    cpu.registers[4]=33;
     return 0;
 }
 
