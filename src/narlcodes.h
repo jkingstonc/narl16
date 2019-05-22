@@ -13,6 +13,7 @@ Relevant information about the ISA
 #define HEAP_ADDR 0x7000
 #define STACK_ADDR 0xE000
 #define VIDEO_ADDR 0xF000
+#define MEM_SIZE 0x10000
 
 #define MAX_PROG_LEN 256
 #define MAX_LINE_LEN 128
@@ -20,6 +21,11 @@ Relevant information about the ISA
 #define MAX_OP 28
 #define MAX_XY_FUNCS 3
 #define MAX_REG 16
+
+#define PC 0
+#define SP 1
+#define IA 2
+#define CR 3
 
 // Strings corresponding to indexes of opcodes
 const char *opcodes[] = 

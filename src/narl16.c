@@ -5,6 +5,7 @@ This file is the first standard emulator implementation of the narl16 ISA.
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "narlcodes.h"
@@ -12,10 +13,15 @@ This file is the first standard emulator implementation of the narl16 ISA.
 // Macro to convert a text address position to a line number
 #define ADDR_TO_LINE(addr) (((addr)-(TEXT_ADDR))/2)
 
+// Program text
+unsigned short bytecode[MAX_PROG_LEN];
+// Memory is byte addressable
+unsigned char * memory;
+
 // Cpu represents an instance of the narl16 CPU
 typedef struct Cpu{
     // Contain register values
-    int registers[12];
+    int registers[MAX_REG];
 }Cpu;
 
 Cpu cpu;
@@ -24,27 +30,47 @@ Cpu cpu;
 
 int execute_prog()
 {
+    free(memory);
     return 0;
 }
 
 int setup_emulator()
 {
+    // First setup and load the program into memory
+    memory = (unsigned char*)malloc(sizeof(unsigned char)*MEM_SIZE);
+    unsigned short memory_counter = TEXT_ADDR;
+    int i=0;
+    while(bytecode[i]!=0x0)
+    {
+        // Get the lower 8 bits of the bytecode and write it to the next memory address
+        unsigned char lower = (bytecode[i])&0xFF;
+        memory[memory_counter]=lower;
+        memory_counter+=8;
+        // Get the upper 8 bits of the bytecode and write it to the next memory address
+        unsigned char upper = ((bytecode[i])>>8);
+        memory[memory_counter]=upper;
+        memory_counter+=8;
+        i++;
+    }
+
+    // Initialise CPU registers
+    cpu=(Cpu){ .registers={0} };
+    cpu.registers[PC]=TEXT_ADDR;
+    cpu.registers[SP]=STACK_ADDR;
+
+    // Run the FDE cycle
+    while(1)
+    {}
+
     return 0;
 }
 
 int load_prog(char * name)
 {   
-    // testing to see if written properly
+    // Load the file and write the bytecode to an unsigned short array
     FILE * read_file;
     read_file=fopen(name,"rb");
-    unsigned short buffer[MAX_PROG_LEN];
-    fread(&buffer,8,sizeof(unsigned short),read_file);
-    int i=0;
-    while(buffer[i]!=0x0 || i==sizeof(buffer)/sizeof(buffer[0]))
-    {
-        printf("%x\n",buffer[i]);
-        i++;
-    }
+    fread(&bytecode,8,sizeof(unsigned short),read_file);
 }
 
 int main(int argc, char *argv[])
