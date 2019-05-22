@@ -17,6 +17,39 @@ This file takes a .narl file as an input and assembles it to a binary
 #define MAX_OP 28
 #define MAX_XY_FUNCS 3
 
+typedef struct {
+    short * array;
+    size_t used;
+    size_t size;
+} BytecodeArray;
+
+// Initialise a bytecode array to be written to disk
+void init_bytecode_array(BytecodeArray * a, size_t initial)
+{
+    a->array=(short*)malloc(sizeof(short)*initial);
+    a->used=0;
+    a->size=initial;
+}
+
+// Dynamically insert an element to the array
+void insert_bytecode_array(BytecodeArray * a, short element)
+{
+    if(a->used==a->size)
+    {
+        a->size*=2;
+        a->array=(short*)realloc(a->array, a->size * sizeof(short));
+    }
+    a->array[a->used++]=element;
+}
+
+// Free the bytecode array
+void free_bytecode_array(BytecodeArray * a)
+{
+    free(a->array);
+    a->array=NULL;
+    a->used=a->size = 0;
+}
+
 // Strings corresponding to indexes of opcodes
 const char *opcodes[] = 
     {"NOP","SET","ADD","SUB","MUL","DIV","AND","OR","XOR","NOT",
@@ -30,7 +63,7 @@ const char *xy_funcs[] = {"PSH","POP","PEEK"};
 // The program string
 char prog[MAX_PROG_LEN][MAX_LINE_LEN];
 // The assembled binaries
-short * prog_assembled;
+BytecodeArray bytecode_array;
 
 // Check if an opcode string exists and return it's index
 int check_op_index(char * op)
@@ -104,7 +137,7 @@ int check_is_mem(char * str)
 }
 
 // Get the x/y value for a given string, and assign the optional extended word values
-int get_xy_val(char * xy, short * s, unsigned short * us)
+int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us_flag)
 {
     // Check if xy is in registers
     if(check_reg_index(xy)!=-1) return check_reg_index(xy);
@@ -116,6 +149,7 @@ int get_xy_val(char * xy, short * s, unsigned short * us)
     if(check_is_int(xy)!=-1) 
     {
         *s=atoi(xy);
+        *s_flag=1;
         return 20;
     }
 
@@ -123,6 +157,7 @@ int get_xy_val(char * xy, short * s, unsigned short * us)
     if(check_is_uint(xy)!=-1) 
     {
         *us=atoi(++xy);
+        *us_flag=1;
         return 21;
     }
 
@@ -142,9 +177,9 @@ int get_xy_val(char * xy, short * s, unsigned short * us)
         // Check what type of address specifier we have (immediate, register, stack operation function)
         switch(mem)
         {
-            case 1: {*s = atoi(mem_addr); return 23; }
-            case 2: {*s = check_reg_index(mem_addr); return 24; } 
-            case 3: {*s = check_is_stackfunc(mem_addr); return 25; } 
+            case 1: {*s = atoi(mem_addr); *s_flag=1; return 23; }
+            case 2: {*s = check_reg_index(mem_addr); *s_flag=1; return 24; } 
+            case 3: {*s = check_is_stackfunc(mem_addr); *s_flag=1; return 25; } 
         }
     }
     return -1;
@@ -153,6 +188,9 @@ int get_xy_val(char * xy, short * s, unsigned short * us)
 // Generate bytecode integers from the text
 int make_bytecode()
 {
+    // Initialise the bytecode array
+    init_bytecode_array(&bytecode_array,1);
+
     // Loop through the program
 	int line_counter;
 	for(line_counter=0;line_counter<MAX_PROG_LEN;line_counter++)
@@ -174,15 +212,22 @@ int make_bytecode()
         while(next != NULL)
         {
             // for either x or y, they may need an extra word for an immediate value
+            int s_flag, us_flag=0;
             short s=0;
             unsigned short us=0;
             // Get the value that should be inserted into the oxy position
-            int val = (counter==0) ? check_op_index(next) : get_xy_val(next,&s,&us);
+            int val = (counter==0) ? check_op_index(next) : get_xy_val(next,&s,&us,&s_flag,&us_flag);
             if(val<0) return -1;
             // Get the bit position in the bytecode that it should be inserted into
             int bit_position = (counter==0) ? 0 : 6+(5*(counter-1));
             // Set the bytecode bits
             bytecode |= (val << bit_position);
+            // Insert the bytecode to the bytecode_array
+            insert_bytecode_array(&bytecode_array,bytecode);
+            // Insert the optional extended word immediate values
+            if(s_flag)insert_bytecode_array(&bytecode_array,s);
+            if(us_flag)insert_bytecode_array(&bytecode_array,us);
+
             printf("short:  %d\n", s);
             printf("ushort: %hu\n", us);
             // Get the next word & increase the counter
