@@ -295,7 +295,7 @@ int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us
     {
         *us=label;
         *us_flag=1; 
-        return 23;
+        return 20;
     }
 
     return -1;

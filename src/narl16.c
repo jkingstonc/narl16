@@ -41,7 +41,7 @@ void print_registers()
     int i;
     for(i=0;i<MAX_REG;i++)
     {
-        printf("%s: %d [%04x]\n",reg_str[i], cpu.registers[i], cpu.registers[i]);
+        printf("%s : [%04x] %d \n",reg_str[i], cpu.registers[i], cpu.registers[i]);
     }
 }
 
@@ -200,59 +200,129 @@ int execute_prog()
             case 0x1: // SET
             {
                 *source_pointer=*dest_pointer;
-                printf("new value: %d\n", *source_pointer);
                 break;
             }
             case 0x2: // ADD
             {
-                *source_pointer+=dest_immediate;
-                printf("new value: %d\n", *source_pointer);
+                *source_pointer+=*dest_pointer;
                 break;
             }
             case 0x3: // SUB
-            {break;}
+            {
+                *source_pointer-=*dest_pointer;
+                break;
+            }
             case 0x4: // MUL
-            {break;}
+            {
+                *source_pointer*=*dest_pointer;
+                break;
+            }
             case 0x5: // DIV
-            {break;}
+            {
+                *source_pointer/=*dest_pointer;
+                break;
+            }
             case 0x6: // AND
-            {break;}
+            {
+                *source_pointer&=*dest_pointer;
+                break;
+            }
             case 0x7: // OR
-            {break;}
+            {
+                *source_pointer|=*dest_pointer;
+                break;
+            }
             case 0x8: // XOR
-            {break;}
+            {
+                *source_pointer^=*dest_pointer;
+                break;
+            }
             case 0x9: // NOT
             {break;}
             case 0xA: // MOD
-            {break;}
+            {
+                *source_pointer%=*dest_pointer;
+                break;
+            }
             case 0xB: // REM
-            {break;}
+            {
+                break;
+            }
             case 0xC: // SRL
-            {break;}
+            {
+                *source_pointer=*source_pointer >> *dest_pointer;
+                break;
+            }
             case 0xD: // SLL
-            {break;}
+            {
+                *source_pointer=*source_pointer << *dest_pointer;
+                break;
+            }
             case 0xE: // SRA
-            {break;}
+            {
+                *source_pointer=*source_pointer >> *dest_pointer;
+                break;
+            }
             case 0xF: // SLA
-            {break;}
+            {
+                *source_pointer=*source_pointer << *dest_pointer;
+                break;
+            }
             case 0x10: // IEQ
-            {break;}
+            {
+                // Skip over the next word if the values aren't equal
+                if(*source_pointer != *dest_pointer) INCREMENT_PC(2);
+                break;
+            }
             case 0x11: // INE
-            {break;}
+            {
+                // Skip over the next word if the values are equal
+                if(*source_pointer == *dest_pointer) INCREMENT_PC(2);
+                break;
+            }
             case 0x12: // IGE
-            {break;}
+            {
+                // Skip over the next word if x isn't greater than or equal to y
+                if(*source_pointer < *dest_pointer) INCREMENT_PC(2);
+                break;
+            }
             case 0x13: // IGT
-            {break;}
+            {
+                // Skip over the next word if x isn't greater than y
+                if(*source_pointer <= *dest_pointer) INCREMENT_PC(2);
+                break;
+            }
             case 0x14: // ILT
-            {break;}
+            {
+                // Skip over the next word if x isn't less than y
+                if(*source_pointer >= *dest_pointer) INCREMENT_PC(2);
+                break;
+            }
             case 0x15: // ILE
-            {break;}
+            {
+                // Skip over the next word if x isn't less than or equal to y
+                if(*source_pointer > *dest_pointer) INCREMENT_PC(2);
+                break;
+            }
             case 0x16: // IBS
-            {break;}
+            {
+                // Skip over the next word if x and y arent set
+                if(!(*source_pointer) || !(*dest_pointer)) INCREMENT_PC(2);
+                break;
+            }
             case 0x17: // INB
-            {break;}
+            {
+                // Skip over the next word if x and y are set
+                if(*source_pointer && *dest_pointer) INCREMENT_PC(2);
+                break;
+            }
             case 0x18: // JAL
-            {break;}
+            {
+                // Push the program counter to the stack and jump
+                push_stack(GET_PC());
+                cpu.registers[PC]=*source_pointer;
+                break;
+            }
             case 0x19: // RTN
             {break;}
             case 0x1A: // SYS
@@ -296,7 +366,6 @@ int setup_emulator()
     cpu=(Cpu){ .registers={0} };
     cpu.registers[PC]=TEXT_ADDR;
     cpu.registers[SP]=STACK_ADDR;
-    cpu.registers[4]=33;
     return 0;
 }
 
