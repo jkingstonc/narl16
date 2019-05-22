@@ -39,30 +39,79 @@ void print_registers()
     }
 }
 
+unsigned short get_next_bytecode()
+{
+    unsigned short bytecode=0;
+    unsigned char lower = memory[GET_PC()];
+    INCREMENT_PC(1);
+    unsigned char upper = memory[GET_PC()];
+    INCREMENT_PC(1);
+    bytecode=(bytecode|upper)<<8;
+    bytecode|=lower;
+    return bytecode;
+}
+
+int get_immediate_value(int code, unsigned short * immediate)
+{
+    // Check if the xy value is specifying we are using an extended-word immediate
+    if(code>=20 && code<=25) 
+    {
+        // Get the next bytecode value
+        unsigned short imm=get_next_bytecode();
+        switch(code)
+        {
+            case 20: 
+            {
+                *immediate=imm;
+                break; 
+            } // Signed immediate
+            case 21: 
+            {
+                *immediate=imm;
+                break; 
+            } // Unsigned immediate
+            case 22: break; // Half prescision IEE 754 fp
+            case 23: 
+            {
+                * immediate=memory[imm];
+                break;
+            } // Memory immediate
+            case 24:
+            {
+                * immediate=memory[cpu.registers[imm]];
+            } // Memory register contents
+            case 25:
+            {
+                switch(imm)
+                {
+                    case 17: break; // PSH
+                    case 18: break; // POP
+                    case 19: break; // PEK
+                }
+            }
+        }
+    }
+}
+
 int execute_prog()
 {
     // Run the FDE cycle
     do
     {
-        unsigned short bytecode=0;
-        unsigned char lower = memory[GET_PC()];
-        INCREMENT_PC(1);
-        unsigned char upper = memory[GET_PC()];
-        INCREMENT_PC(1);
-        bytecode=(bytecode|upper)<<8;
-        bytecode|=lower;
+        unsigned short bytecode=get_next_bytecode();
         printf("bytecode: %x\n",bytecode);
 
         // Get the opcode and the x and y values
-        unsigned char op=bytecode&0x3F,x=(bytecode>>6)&0x1F,y=(bytecode>>12)&0x1F;
-        unsigned char ximmediate=0,yimmediate=0;
-        // Check if we need an immediate value for x
-        if(x>=20 && x<=25)
-        {}
-        // Check if we need an immediate value for y
-        if(y>=20 && y<=25)
-        {}
+        unsigned char op=bytecode&0x3F,x=(bytecode>>6)&0x1F,y=(bytecode>>11)&0x1F;
+        unsigned short ximmediate=0,yimmediate=0;
 
+        // Check if we need an immediate value for x and y, and if so set it
+        get_immediate_value(x, &ximmediate);
+        get_immediate_value(y, &yimmediate);
+
+        printf("x: %d, xim: %d\n",x,ximmediate);
+        printf("y: %d, yim: %d\n",y,yimmediate);
+        // For each x and y, we need to get the value that it represents
         switch(op)
         {
             case 0x0: break;
@@ -124,7 +173,7 @@ int execute_prog()
         
 
         // Check if we have reached a NOP
-        if(lower==0x0 && upper==0x0) break;
+        if(bytecode == 0x0) break;
     }while(GET_PC()<MEM_SIZE);
     // Free relevant memory
     free(memory);
@@ -143,12 +192,12 @@ int setup_emulator()
         unsigned char lower = (bytecode[i])&0xFF;
         memory[memory_counter]=lower;
         memory_counter+=1;
-        printf("Written to memory location %x: %x\n",memory_counter,lower);
+        // printf("Written to memory location %x: %x\n",memory_counter,lower);
         // Get the upper 8 bits of the bytecode and write it to the next memory address
         unsigned char upper = ((bytecode[i])>>8);
         memory[memory_counter]=upper;
         memory_counter+=1;
-        printf("Written to memory location %x: %x\n",memory_counter,upper);
+        // printf("Written to memory location %x: %x\n",memory_counter,upper);
         i++;
     }
 
@@ -156,7 +205,6 @@ int setup_emulator()
     cpu=(Cpu){ .registers={0} };
     cpu.registers[PC]=TEXT_ADDR;
     cpu.registers[SP]=STACK_ADDR;
-    print_registers();
     return 0;
 }
 
