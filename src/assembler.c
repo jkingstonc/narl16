@@ -333,7 +333,7 @@ int make_bytecode()
             int temp_s_flag=0, temp_us_flag=0;
             short temp_s=0;
             unsigned short temp_us=0;
-
+        
             // Get the value that should be inserted into the oxy position
             int val = (counter==0) ? check_op_index(next) : get_xy_val(next,&temp_s,&temp_us,&temp_s_flag,&temp_us_flag);
             if(val<0) return -1;

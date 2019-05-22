@@ -316,18 +316,24 @@ int execute_prog()
                 if(*source_pointer && *dest_pointer) INCREMENT_PC(2);
                 break;
             }
-            case 0x18: // JAL
+            case 0x18: // JMP
+            {
+                // Jump to the destination
+                cpu.registers[PC]=*source_pointer;
+                break;
+            }
+            case 0x19: // JAL
             {
                 // Push the program counter to the stack and jump
                 push_stack(GET_PC());
                 cpu.registers[PC]=*source_pointer;
                 break;
             }
-            case 0x19: // RTN
+            case 0x1A: // RTN
             {break;}
-            case 0x1A: // SYS
+            case 0x1B: // SYS
             {break;}
-            case 0x1B: // INT
+            case 0x1C: // INT
             {break;}
         }
         

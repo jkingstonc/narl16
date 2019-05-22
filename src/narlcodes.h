@@ -18,7 +18,7 @@ Relevant information about the ISA
 #define MAX_PROG_LEN 256
 #define MAX_LINE_LEN 128
 
-#define MAX_OP 28
+#define MAX_OP 29
 #define MAX_XY_FUNCS 3
 #define MAX_REG 16
 
@@ -31,7 +31,7 @@ Relevant information about the ISA
 const char *opcodes[] = 
     {"NOP","SET","ADD","SUB","MUL","DIV","AND","OR","XOR","NOT",
      "MOD", "REM", "SRL", "SLL", "SRA", "SLA", "IEQ", "INE", "IGE", 
-     "IGT", "ILT", "ILE", "IBS", "INB", "JAL", "RTN", "SYS", "INT"};
+     "IGT", "ILT", "ILE", "IBS", "INB", "JMP", "JAL", "RTN", "SYS", "INT"};
 // Strings corresponding to indexes in the registers
 const char *reg_str[] = {"pc", "sp", "ia", "cr", "r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12"};
 // Strings corresponding to xy available stack functions

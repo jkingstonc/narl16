@@ -47,7 +47,7 @@ The memory layout is as follows:
 Instructions
 ============
 
-* Instructions are all 16 bit values using little endian
+* Instructions are all 16 bit values using little endian, the lower 8 bits are stored in a lower address memory than the upper 8
 
 yyyyyxxxxx000000
 
@@ -114,29 +114,31 @@ Opcode table:
 |-------+------+-----------------------------------------------------------------------------|
 |  0xF  | SLA  | Sets x to x SHIFT LEFT ARITHMETIC y                                         |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xF1 | IEQ  | Perform next instruction only if x is equal to y                            |
+|  0x11 | IEQ  | Perform next instruction only if x is equal to y                            |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xF2 | INE  | Perform next instruction only if x is not equal to y                        |
+|  0x12 | INE  | Perform next instruction only if x is not equal to y                        |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xF3 | IGE  | Perform next instruction only if x is greater than or equal to y            |
+|  0x13 | IGE  | Perform next instruction only if x is greater than or equal to y            |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xF3 | IGT  | Perform next instruction only if x is greater than y                        |
+|  0x13 | IGT  | Perform next instruction only if x is greater than y                        |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xF4 | ILT  | Perform next instruction only if x is less than y                           |
+|  0x14 | ILT  | Perform next instruction only if x is less than y                           |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xF3 | ILE  | Perform next instruction only if x is less than or equal to y               |
+|  0x13 | ILE  | Perform next instruction only if x is less than or equal to y               |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xF5 | IBS  | Perform next instruction only if x and y are both non zero                  |
+|  0x15 | IBS  | Perform next instruction only if x and y are both non zero                  |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xF6 | INB  | Perform next instruction only if x and y are not both non zero              |
+|  0x16 | INB  | Perform next instruction only if x and y are not both non zero              |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xFA | JAL  | Push PC to stack and jump to the value in x                                 |
+|  0x1A | JMP  | Jump to the value in x                                                      |
+|-------+------+-----------------------------------------------------------------------------| 
+|  0x1B | JAL  | Push PC to stack and jump to the value in x                                 |
 |-------+------+-----------------------------------------------------------------------------|  
-|  0xFB | RTN  | Pop the stack and set PC to that address                                    |
+|  0x1D | RTN  | Pop the stack and set PC to that address                                    |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xFC | SYS  | System call the function with arguments on the stack                        |
+|  0x1D | SYS  | System call the function with arguments on the stack                        |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xFD | INT  | Call an interrupt, push PC then set it to $ia                               |
+|  0x1E | INT  | Call an interrupt, push PC then set it to $ia                               |
 ----------------------------------------------------------------------------------------------
 
 
