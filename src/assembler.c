@@ -9,7 +9,6 @@ This file takes a .narl file as an input and assembles it to a binary
 #include <stdlib.h>
 #include <string.h>
 
-
 #define TEXT_ADDR 0x2000
 #define MAX_REG 16
 #define MAX_PROG_LEN 256
@@ -22,34 +21,6 @@ typedef struct {
     size_t used;
     size_t size;
 } BytecodeArray;
-
-// Initialise a bytecode array to be written to disk
-void init_bytecode_array(BytecodeArray * a, size_t initial)
-{
-    a->array=(short*)malloc(sizeof(short)*initial);
-    a->used=0;
-    a->size=initial;
-}
-
-// Dynamically insert an element to the array
-void insert_bytecode_array(BytecodeArray * a, unsigned short element)
-{
-    printf("Inserting %04x\n",element);
-    if(a->used==a->size)
-    {
-        a->size+=1;
-        a->array=(short*)realloc(a->array, a->size * sizeof(unsigned short));
-    }
-    a->array[a->used++]=element;
-}
-
-// Free the bytecode array
-void free_bytecode_array(BytecodeArray * a)
-{
-    free(a->array);
-    a->array=NULL;
-    a->used=a->size = 0;
-}
 
 // Strings corresponding to indexes of opcodes
 const char *opcodes[] = 
@@ -66,23 +37,64 @@ char prog[MAX_PROG_LEN][MAX_LINE_LEN];
 // The assembled binaries
 BytecodeArray bytecode_array;
 
+// Initialise a bytecode array to be written to disk
+void init_bytecode_array(BytecodeArray * a, size_t initial)
+{
+    a->array=(unsigned short*)malloc(sizeof(unsigned short)*initial);
+    a->used=0;
+    a->size=initial;
+}
+
+// Dynamically insert an element to the array
+void insert_bytecode_array(BytecodeArray * a, unsigned short element)
+{
+    if(a->used==a->size)
+    {
+        a->size+=1;
+        a->array=(unsigned short*)realloc(a->array, a->size * sizeof(unsigned short));
+    }
+    a->array[a->used++]=element;
+}
+
+// Free the bytecode array
+void free_bytecode_array(BytecodeArray * a)
+{
+    free(a->array);
+    a->array=NULL;
+    a->used=a->size = 0;
+}
+
+// Remove a substring from a string
+char * str_remove(char *str, const char *sub) 
+{
+    size_t len = strlen(sub);
+    if (len > 0) {
+        char *p = str;
+        size_t size = 0;
+        while ((p = strstr(p, sub)) != NULL) {
+            size = (size == 0) ? (p - str) + strlen(p + len) + 1 : size - len;
+            memmove(p, p + len, size - (p - str));
+        }
+    }
+    return str;
+}
 
 // Write the bytecode array to disk
 int write_bytecode(char * name)
 {
-    // int i;
-    // for(i=0;i<(&bytecode_array)->used;i++)
-    // {
-    //     printf("%x\n",(&bytecode_array)->array[i]);
-    // }
+    // Remove the .narl extention and add the .narlb extension
+    name = str_remove(name, ".narl");
+    strcat(name, ".narlb");
+    // Open the file in binary write mode
     FILE * write_file;
-    write_file=fopen("narl_binary.bin","wb");
-    fwrite(&bytecode_array, sizeof(short), sizeof(bytecode_array), write_file);
+    write_file=fopen(name,"wb");
+    // Write the bytecode array to the file
+    fwrite(bytecode_array.array, sizeof(short), sizeof(bytecode_array.array), write_file);
+    // Close the file and free the bytecode
     fclose(write_file);
     free_bytecode_array(&bytecode_array);
     return 0;
 }
-
 
 // Check if an opcode string exists and return it's index
 int check_op_index(char * op)
@@ -245,19 +257,8 @@ int make_bytecode()
             // Set the bytecode bits
             bytecode |= (val << bit_position);
             // Set the optional extended word immediate values
-            if(temp_s_flag)
-            { 
-                if(counter==1) 
-                {
-                    sx=temp_s;
-                    sx_flag=1;
-                }else if(counter==2)
-                {
-                    sy=temp_s;
-                    sy_flag=1;
-                }
-            }
-            if(temp_us_flag){ if(counter==1) {usx=temp_us;usx_flag=1;}else if(counter==2){usy=temp_us;usy_flag=1;}}
+            if(temp_s_flag){if(counter==1){sx=temp_s;sx_flag=1;}else if(counter==2){sy=temp_s;sy_flag=1;}}
+            if(temp_us_flag){if(counter==1){usx=temp_us;usx_flag=1;}else if(counter==2){usy=temp_us;usy_flag=1;}}
             // Get the next word & increase the counter
             next = strtok(NULL, " ,");
             counter++;
@@ -270,6 +271,8 @@ int make_bytecode()
         if(sy_flag)insert_bytecode_array(&bytecode_array,sy);
         else if(usy_flag)insert_bytecode_array(&bytecode_array,usy);
 	}
+    // Insert a NOP opeartor to the end
+    insert_bytecode_array(&bytecode_array,(unsigned short) 0x0);
     return 0;
 }
 
@@ -294,7 +297,6 @@ int load_prog(char* prog_name)
 
     return 0;
 }
-
 
 int main(int argc, char *argv[])
 {
