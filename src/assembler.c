@@ -39,6 +39,9 @@ const char *xy_funcs[] = {"PSH","POP","PEEK"};
 
 // The program string
 char prog[MAX_PROG_LEN][MAX_LINE_LEN];
+// Number of lines
+int prog_len;
+// Copy of the original program, used for macro searching
 char ** original_prog;
 // The assembled binaries
 BytecodeArray bytecode_array;
@@ -182,18 +185,51 @@ int check_is_label(char * str)
     // Loop over every line and see if it contains a label
     int i=0;
     int macro_counter=0;
-    while(i<MAX_PROG_LEN)
+    while(i<prog_len)
     {
-        // If we are on a macro line, we want to skip it as it doesn't count as an address line
-
+        // We have found the label as a substring to the line
         if(strstr(original_prog[i], lbl) != NULL)
         {
             return LINE_TO_ADDR(i-macro_counter);
         }
+        // If we are on a macro line, we want to skip it as it doesn't count as an address line
         if(strstr(original_prog[i], "#") != NULL) macro_counter++;
         i++;
     }
     free(str_cpy);
+    return -1;
+}
+
+int check_is_dat(char * str)
+{
+    int i=0;
+    char * dat_line;
+    while(i<prog_len)
+    {
+        // Check if we are on a data macro line
+        if(strstr(original_prog[i], "#") != NULL && strstr(original_prog[i], "DAT") != NULL)
+        {
+            // If we have found the macro we are looking for
+            if(strstr(original_prog[i], str) != NULL)
+            {
+                // Copy the line to a string that we can process
+                dat_line=strdup(original_prog[i]);
+                dat_line[strlen(dat_line)]='\0';
+                char * next = strtok(dat_line," ");
+                int word_count=0;
+                // Else lex standard statement
+                while(next != NULL)
+                {
+                    // Check to see if we are on the value, return it as an integer
+                    if(word_count == 3) return atoi(next);
+                    next = strtok(NULL," ");  
+                    word_count++;
+                }
+                free(dat_line);
+            }
+        }
+        i++;
+    }
     return -1;
 }
 
@@ -244,6 +280,14 @@ int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us
         }
     }
 
+    // check if xy is a data macro
+    if(check_is_dat(xy)) 
+    {
+        *s=check_is_dat(xy);
+        *s_flag=1; 
+        return 20;
+    }
+
     // check if xy is a label address
     if(check_is_label(xy)) 
     {
@@ -263,7 +307,7 @@ int make_bytecode()
 
     // Loop through the program
 	int line_counter;
-	for(line_counter=0;line_counter<MAX_PROG_LEN;line_counter++)
+	for(line_counter=0;line_counter<prog_len;line_counter++)
 	{
         // Check if the line is empty
         if(prog[line_counter][0] == '\0') continue;
@@ -275,7 +319,7 @@ int make_bytecode()
         char * next = strtok(prog[line_counter]," ,\n");
 
         // Check if we are lexing macro
-        if(strcmp(next,"#")==0) {continue;}
+        if(strcmp(next,"#")==0) continue;
 
         // for either x or y, they may need an extra word for an immediate value
         int sx_flag=0, usx_flag=0, sy_flag=0, usy_flag=0;
@@ -328,12 +372,15 @@ int load_prog(char* prog_name)
 	// Loop through each file line and add it to the prog array
 	while(fgets(prog[line_counter],MAX_LINE_LEN,file)!=NULL)
 	{
+        if(prog[line_counter][0]=='\n') break;
 		// Add a null terminator to the line string
         // for some reason the below line causes the bytecode maker not to work :(
 		prog[line_counter][strlen(prog[line_counter])]='\0';
         original_prog[line_counter]=strdup(prog[line_counter]);
 		line_counter++;
+        
 	}
+    prog_len=line_counter;
 	int i;
 
     return 0;
