@@ -147,7 +147,7 @@ int get_xy_val(char * xy, short * s, unsigned short * us)
             case 3: {*s = check_is_stackfunc(mem_addr); return 25; } 
         }
     }
-    return 0;
+    return -1;
 }
 
 // Generate bytecode integers from the text
@@ -178,6 +178,7 @@ int make_bytecode()
             unsigned short us=0;
             // Get the value that should be inserted into the oxy position
             int val = (counter==0) ? check_op_index(next) : get_xy_val(next,&s,&us);
+            if(val<0) return -1;
             // Get the bit position in the bytecode that it should be inserted into
             int bit_position = (counter==0) ? 0 : 6+(5*(counter-1));
             // Set the bytecode bits
@@ -223,7 +224,7 @@ int load_prog(char* prog_name)
 
 int main(int argc, char *argv[])
 {
-    load_prog(argv[1]);
-    make_bytecode();
+    if(load_prog(argv[1])<0){printf("Failed to load program!\n");return -1;};
+    if(make_bytecode()<0) {printf("Failed to assemble!\n");return -1;};
     return 0;
 }
