@@ -143,17 +143,24 @@ int check_is_stackfunc(char * str)
 // Check if an xy atomic value is a signed integer
 int check_is_int(char * str)
 {
+    // Check if it is in hex format
+    int num = (int)strtol(str, NULL, 16);
+    if(num != 0) return num;
+
     int i;
     // Check if each integer isn't a digit, if so it's not an integer
     for(i=0;i<strlen(str);i++) if(isdigit(str[i])==0) return 0;
-    return 1;
+
+    return atoi(str);
 }
 
 // Check if an xy atomic value is an unsigned integer
 int check_is_uint(char * str)
 {
+    int check=check_is_int(++str);
     // If the string is prefixed with a 'u' and the rest is an integer
-    if(str[0]=='u' && check_is_int(++str)) return 1;
+    // Not the pointer has to be decremented as we previously incremented it to get the check val
+    if((--str)[0]=='u' && check) return check;
     return 0;
 }
 
@@ -245,17 +252,19 @@ int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us
     if (stack_func) return stack_func;
 
     // check if xy is a signed int
-    if(check_is_int(xy)) 
+    int num = check_is_int(xy);
+    if(num) 
     {
-        *s=atoi(xy);
+        *s=num;
         *s_flag=1;
         return 20;
     }
 
     // check if xy is an unsigned int
-    if(check_is_uint(xy)) 
+    int unum = check_is_uint(xy);
+    if(unum) 
     {
-        *us=atoi(++xy);
+        *us=unum;
         *us_flag=1;
         return 21;
     }
