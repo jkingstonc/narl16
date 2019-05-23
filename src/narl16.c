@@ -330,7 +330,10 @@ int execute_prog()
                 break;
             }
             case 0x1A: // RTN
-            {break;}
+            {
+                cpu.registers[PC]=pop_stack();
+                break;
+            }
             case 0x1B: // SYS
             {break;}
             case 0x1C: // INT
@@ -381,6 +384,7 @@ int load_prog(char * name)
     FILE * read_file;
     read_file=fopen(name,"rb");
     fread(&bytecode,8,sizeof(unsigned short),read_file);
+    return 0;
 }
 
 int main(int argc, char *argv[])
