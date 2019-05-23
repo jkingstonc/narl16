@@ -23,6 +23,7 @@ This file is the first standard emulator implementation of the narl16 ISA.
 #define INCREMENT_SP(ammount) ((cpu.registers[SP])=(cpu.registers[SP])+(ammount))
 // Macro to decrement the SP
 #define DECREMENT_SP(ammount) ((cpu.registers[SP])=(cpu.registers[SP])-(ammount))
+
 // Program text
 unsigned short bytecode[MAX_PROG_LEN];
 // Memory is byte addressable
@@ -178,6 +179,109 @@ int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag)
     return 1;
 }
 
+
+
+// Functions for opcode operations
+int res_op(unsigned short ** x, unsigned short **y){return 0;}
+int nop_op(unsigned short ** x, unsigned short **y){return 0;}
+int set_op(unsigned short ** x, unsigned short **y){**x=**y;INCREMENT_PC(2);return 0;}
+int add_op(unsigned short ** x, unsigned short **y){**x+=**y;INCREMENT_PC(2);return 0;}
+int sub_op(unsigned short ** x, unsigned short **y){**x-=**y;INCREMENT_PC(2);return 0;}
+int mul_op(unsigned short ** x, unsigned short **y){**x*=**y;INCREMENT_PC(2);return 0;}
+int div_op(unsigned short ** x, unsigned short **y){**x/=**y;INCREMENT_PC(2);return 0;}
+int and_op(unsigned short ** x, unsigned short **y){**x=**x&**y;INCREMENT_PC(2);return 0;}
+int or_op(unsigned short ** x, unsigned short **y) {**x=**x|**y;INCREMENT_PC(2);return 0;}
+int xor_op(unsigned short ** x, unsigned short **y){**x=**x^**y;INCREMENT_PC(2);return 0;}
+int not_op(unsigned short ** x, unsigned short **y){**x=~(**x);INCREMENT_PC(2);return 0;}
+int mod_op(unsigned short ** x, unsigned short **y){**x%=**y;INCREMENT_PC(2);return 0;}
+int rem_op(unsigned short ** x, unsigned short **y){**x/=**y;INCREMENT_PC(2);return 0;}
+int srl_op(unsigned short ** x, unsigned short **y){**x=**x>>**y;INCREMENT_PC(2);return 0;}
+int sll_op(unsigned short ** x, unsigned short **y){**x=**x<<**y;INCREMENT_PC(2);return 0;}
+int sra_op(unsigned short ** x, unsigned short **y){**x=**x>>**y;INCREMENT_PC(2);return 0;}
+int sla_op(unsigned short ** x, unsigned short **y){**x=**x<<**y;INCREMENT_PC(2);return 0;}
+int ieq_op(unsigned short ** x, unsigned short **y)
+{
+    // Skip over the next word if x isn't greater than or equal to y
+    if(**x == **y) INCREMENT_PC(2);
+    else INCREMENT_PC(4);
+    return 0;
+}
+int ine_op(unsigned short ** x, unsigned short **y)
+{
+    // Skip over the next word if x isn't greater than or equal to y
+    if(**x != **y) INCREMENT_PC(2);
+    else INCREMENT_PC(4);
+    return 0;
+}
+int ige_op(unsigned short ** x, unsigned short **y)
+{
+    // Skip over the next word if x isn't greater than or equal to y
+    if(**x >= **y) INCREMENT_PC(2);
+    else INCREMENT_PC(4);
+    return 0;
+}
+int igt_op(unsigned short ** x, unsigned short **y)
+{
+    // Skip over the next word if x isn't greater than or equal to y
+    if(**x > **y) INCREMENT_PC(2);
+    else INCREMENT_PC(4);
+    return 0;
+}
+int ilt_op(unsigned short ** x, unsigned short **y)
+{
+    // Skip over the next word if x isn't greater than or equal to y
+    if(**x < **y) INCREMENT_PC(2);
+    else INCREMENT_PC(4);
+    return 0;
+}
+int ile_op(unsigned short ** x, unsigned short **y)
+{
+    // Skip over the next word if x isn't greater than or equal to y
+    if(**x <= **y) INCREMENT_PC(2);
+    else INCREMENT_PC(4);
+    return 0;
+}
+int ibs_op(unsigned short ** x, unsigned short **y)
+{
+    // Skip over the next word if x isn't greater than or equal to y
+    if(**x && **y) INCREMENT_PC(2);
+    else INCREMENT_PC(4);
+    return 0;
+}
+int inb_op(unsigned short ** x, unsigned short **y)
+{
+    // Skip over the next word if x isn't greater than or equal to y
+    if(!(**x && **y)) INCREMENT_PC(2);
+    else INCREMENT_PC(4);
+    return 0;
+}
+int jmp_op(unsigned short ** x, unsigned short **y)
+{
+    cpu.registers[PC]=**x;
+    return 0;
+}
+int jal_op(unsigned short ** x, unsigned short **y)
+{
+    push_stack(GET_PC());
+    cpu.registers[PC]=**x;
+    return 0;
+}
+int rtn_op(unsigned short ** x, unsigned short **y)
+{
+    cpu.registers[PC]=pop_stack();
+    return 0;
+}
+int sys_op(unsigned short ** x, unsigned short **y) {return 0;}
+int int_op(unsigned short ** x, unsigned short **y) {return 0;}
+
+// Pointers for opcode functions
+int (*opcode_functions[MAX_OP])(unsigned short ** x, unsigned short ** y) = 
+{
+    res_op, nop_op, set_op, add_op, sub_op, mul_op, div_op, and_op, or_op, xor_op, 
+    not_op, mod_op, rem_op, srl_op, sll_op, sra_op, sla_op, ieq_op, ine_op, ige_op, 
+    igt_op, ilt_op, ile_op, ibs_op, inb_op, jmp_op, jal_op, rtn_op, sys_op, int_op
+};
+
 int execute_prog()
 {
     int running =1;
@@ -196,182 +300,8 @@ int execute_prog()
         // Check if we need an immediate value for x and y, and if so set it
         get_immediate_value(x, &source_pointer, 1);
         get_immediate_value(y, &dest_pointer,0);
-
-        switch(op)
-        {
-            case 0x0: {running=0;break;}
-            case 0x2: // SET
-            {
-                *source_pointer=*dest_pointer;
-                INCREMENT_PC(2);
-                break;
-            }
-            case 0x3: // ADD
-            {
-                *source_pointer+=*dest_pointer;
-                INCREMENT_PC(2);
-                break;
-            }
-            case 0x4: // SUB
-            {
-                *source_pointer-=*dest_pointer;
-                INCREMENT_PC(2);
-                break;
-            }
-            case 0x5: // MUL
-            {
-                *source_pointer*=*dest_pointer;
-                INCREMENT_PC(2);
-                break;
-            }
-            case 0x6: // DIV
-            {
-                *source_pointer/=*dest_pointer;
-                INCREMENT_PC(2);
-                break;
-            }
-            case 0x7: // AND
-            {
-                *source_pointer&=*dest_pointer;
-                INCREMENT_PC(2);
-                break;
-            }
-            case 0x8: // OR
-            {
-                *source_pointer|=*dest_pointer;
-                INCREMENT_PC(2);
-                break;
-            }
-            case 0x9: // XOR
-            {
-                *source_pointer^=*dest_pointer;
-                INCREMENT_PC(2);
-                break;
-            }
-            case 0xA: // NOT
-            {
-                *source_pointer=~*(source_pointer);
-                INCREMENT_PC(2);
-                break;
-            }
-            case 0xB: // MOD
-            {
-                *source_pointer%=*dest_pointer;
-                INCREMENT_PC(2);
-                break;
-            }
-            case 0xC: // REM
-            {
-                *source_pointer/=*dest_pointer;
-                INCREMENT_PC(2);
-                break;
-            }
-            case 0xD: // SRL
-            {
-                *source_pointer=*source_pointer >> *dest_pointer;
-                INCREMENT_PC(2);
-                break;
-            }
-            case 0xE: // SLL
-            {
-                *source_pointer=*source_pointer << *dest_pointer;
-                INCREMENT_PC(2);
-                break;
-            }
-            case 0xF: // SRA
-            {
-                *source_pointer=*source_pointer >> *dest_pointer;
-                INCREMENT_PC(2);
-                break;
-            }
-            case 0x10: // SLA
-            {
-                *source_pointer=*source_pointer << *dest_pointer;
-                INCREMENT_PC(2);
-                break;
-            }
-            case 0x11: // IEQ
-            {
-                // Skip over the next word if the values aren't equal
-                if(*source_pointer == *dest_pointer) INCREMENT_PC(2);
-                else INCREMENT_PC(4);
-                break;
-            }
-            case 0x12: // INE
-            {
-                // Skip over the next word if the values are equal
-                if(*source_pointer != *dest_pointer) INCREMENT_PC(2);
-                else INCREMENT_PC(4);
-                break;
-            }
-            case 0x13: // IGE
-            {
-                // Skip over the next word if x isn't greater than or equal to y
-                if(*source_pointer >= *dest_pointer) INCREMENT_PC(2);
-                else INCREMENT_PC(4);
-                break;
-            }
-            case 0x14: // IGT
-            {
-                // Skip over the next word if x isn't greater than y
-                if(*source_pointer > *dest_pointer) INCREMENT_PC(2);
-                else INCREMENT_PC(4);
-                break;
-            }
-            case 0x15: // ILT
-            {
-                // Skip over the next word if x isn't less than y
-                if(*source_pointer < *dest_pointer) INCREMENT_PC(2);
-                else INCREMENT_PC(4);
-                break;
-            }
-            case 0x16: // ILE
-            {
-                // Skip over the next word if x isn't less than or equal to y
-                if(*source_pointer <= *dest_pointer) INCREMENT_PC(2);
-                else INCREMENT_PC(4);
-                break;
-            }
-            case 0x17: // IBS
-            {
-                // Skip over the next word if x and y arent set
-                if(*source_pointer && *dest_pointer) INCREMENT_PC(2);
-                else INCREMENT_PC(4);
-                break;
-            }
-            case 0x18: // INB
-            {
-                // Skip over the next word if x and y arent set
-                if(!(*source_pointer && *dest_pointer)) INCREMENT_PC(2);
-                else INCREMENT_PC(4);
-                break;
-            }
-            case 0x19: // JMP
-            {
-                printf("jumping to: %x\n",*source_pointer);
-                // Jump to the destination
-                cpu.registers[PC]=*source_pointer;
-                break;
-            }
-            case 0x1A: // JAL
-            {
-                // Push the program counter to the stack and jump
-                push_stack(GET_PC());
-                cpu.registers[PC]=*source_pointer;
-                break;
-            }
-            case 0x1B: // RTN
-            {
-                cpu.registers[PC]=pop_stack();
-                break;
-            }
-            case 0x1C: // SYS
-            {break;}
-            case 0x1D: // INT
-            {break;}
-        }
-        // Check if we have reached a NOP
-        if(bytecode == 0x0) break;
+        if(op==0x0 || op==0x1 || bytecode==0x0 || bytecode==0x1) break;
+        (*opcode_functions[op]) (&source_pointer, &dest_pointer);
     }
     print_registers();
     // Free relevant memory
