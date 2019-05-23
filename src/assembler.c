@@ -12,6 +12,7 @@ This file takes a .narl file as an input and assembles it to a binary
 #include "narlcodes.h"
 
 #define COMMENT_CHAR ';'
+#define DATA_MACRO "dat"
 
 // Macro to convert a line number to a text address position
 #define LINE_TO_ADDR(line) (TEXT_ADDR+((line)*(2)))
@@ -200,7 +201,7 @@ int check_is_dat(char * str)
     while(i<prog_len)
     {
         // Check if we are on a data macro line
-        if(strstr(original_prog[i], "#") != NULL && strstr(original_prog[i], "DAT") != NULL)
+        if(strstr(original_prog[i], "#") != NULL && strstr(original_prog[i], DATA_MACRO) != NULL)
         {
             // If we have found the macro we are looking for
             if(strstr(original_prog[i], str) != NULL)

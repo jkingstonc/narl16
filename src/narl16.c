@@ -18,11 +18,11 @@ This file is the first standard emulator implementation of the narl16 ISA.
 // Macro to get the SP value
 #define GET_SP() (cpu.registers[SP])
 // Macro to increment the PC
-#define INCREMENT_PC(ammount) ((cpu.registers[PC])+=(ammount))
+#define INCREMENT_PC(ammount) ((cpu.registers[PC])=(cpu.registers[PC])+(ammount))
 // Macro to increment the SP
-#define INCREMENT_SP(ammount) ((cpu.registers[SP])+=(ammount))
+#define INCREMENT_SP(ammount) ((cpu.registers[SP])=(cpu.registers[SP])+(ammount))
 // Macro to decrement the SP
-#define DECREMENT_SP(ammount) ((cpu.registers[SP])-=(ammount))
+#define DECREMENT_SP(ammount) ((cpu.registers[SP])=(cpu.registers[SP])-(ammount))
 // Program text
 unsigned short bytecode[MAX_PROG_LEN];
 // Memory is byte addressable
@@ -61,13 +61,13 @@ int push_stack(unsigned short value)
 {
     memory[GET_SP()]=value;
     // Stack pointer deals in words not bytes [1 word = 2 bytes]
-    INCREMENT_SP(2);
+    DECREMENT_SP(2);
 }
 unsigned short pop_stack()
 {
     unsigned char value = memory[GET_SP()];
     // Stack pointer deals in words not bytes [1 word = 2 bytes]
-    DECREMENT_SP(2);
+    INCREMENT_SP(2);
     return value;
 }
 unsigned short peek_stack()
@@ -107,12 +107,13 @@ int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag)
             } // Registers
             case 17:
             {
-                if(pointer_flag) {} else{}
+                // If we are setting a push, set the immediate destination to the next sp value
+                if(pointer_flag) {DECREMENT_SP(2); *immediate=(unsigned short *)&(memory[cpu.registers[SP]]); } else { **immediate = 0; }
                 break;
             } // Push
             case 18:
             {
-                if(pointer_flag) {}else{ **immediate=pop_stack();}
+                if(pointer_flag) {}else{ **immediate=pop_stack(); }
                 break;
             } // Pop
             case 19:
@@ -156,7 +157,7 @@ int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag)
                 {
                     case 17: 
                     {
-
+                        
                         break; 
                     } // PSH
                     case 18: 
@@ -238,7 +239,10 @@ int execute_prog()
                 break;
             }
             case 0x9: // NOT
-            {break;}
+            {
+                *source_pointer=~*(source_pointer);
+                break;
+            }
             case 0xA: // MOD
             {
                 *source_pointer%=*dest_pointer;
@@ -246,6 +250,7 @@ int execute_prog()
             }
             case 0xB: // REM
             {
+                *source_pointer/=*dest_pointer;
                 break;
             }
             case 0xC: // SRL
@@ -383,7 +388,7 @@ int load_prog(char * name)
     // Load the file and write the bytecode to an unsigned short array
     FILE * read_file;
     read_file=fopen(name,"rb");
-    fread(&bytecode,8,sizeof(unsigned short),read_file);
+    fread(&bytecode,MAX_PROG_LEN,sizeof(unsigned short),read_file);
     return 0;
 }
 
