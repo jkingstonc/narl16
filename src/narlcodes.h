@@ -7,6 +7,9 @@ Relevant information about the ISA
 #ifndef NARL_CODES_H
 #define NARL_CODES_H
 
+#define SOURCE_EXTENSION "narl"
+#define BINARY_EXTENSION "narlb"
+
 // Base address for memory locations
 #define TEXT_ADDR 0x2000
 #define STATIC_ADDR 0x6000

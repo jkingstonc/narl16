@@ -394,8 +394,23 @@ int load_prog(char* prog_name)
     return 0;
 }
 
+// Get the extension of a filename
+const char * get_filename_ext(const char * filename) {
+    const char *dot = strrchr(filename, '.');
+    if(!dot || dot == filename) return "";
+    return dot + 1;
+}
+
+// Validate the file has the correct extension
+int validate_filename_ext(const char * filename)
+{
+    if(strcmp(get_filename_ext(filename),SOURCE_EXTENSION)==0) return 1;
+    return -1;
+}
+
 int main(int argc, char *argv[])
 {
+    if(validate_filename_ext(argv[1])<0) {printf("Invalid filename!\n");return -1;}
     if(load_prog(argv[1])<0){printf("Failed to load program!\n");return -1;};
     if(make_bytecode()<0) {printf("Failed to assemble!\n");return -1;};
     if(write_bytecode(argv[1])<0) {printf("Failed to write to disk!\n");return -1;}
