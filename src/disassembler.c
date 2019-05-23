@@ -9,17 +9,21 @@ This file takes an assembled .narl file [narl binary] as an input and outputs th
 #include <string.h>
 #include "narlcodes.h"
 
+// The bytecode read from file
 unsigned short bytecode[MAX_PROG_LEN];
 
+// Convert an opcode to a string
 char * get_op_str(char op_index)
 {
+    // Duplicate the constant string in the headder file
     char * str = strdup(opcodes[op_index]);
     return str;
 }
 
+// Convert an xy value to a string
 char * get_xy_str(char val, char ** str_ptr, int * line_counter)
 {
-    // Check if the value is a register, if so copy the register string constant
+    // Check if the value is a register, if so copy the register string constant from the headder
     if(val>=0 && val<=16) *str_ptr=strdup(reg_str[val]);
     // Check if the value is a stack operation
     else if(val>=17 && val<=19) {
@@ -31,22 +35,29 @@ char * get_xy_str(char val, char ** str_ptr, int * line_counter)
         }
     }
     // Check if the value is a signed immediate
-    else if(val==20) {(*line_counter)++;sprintf(*str_ptr, "%d", bytecode[*line_counter]);}
+    else if(val==20) {(*line_counter)++; sprintf(*str_ptr, "%x", bytecode[*line_counter]);}
     // Check if the value is an unsigned immediate
-    else if(val==21) {(*line_counter)++;sprintf(*str_ptr, "%hu", bytecode[*line_counter]);}
-
-    else if(val==23) {
+    else if(val==21) {(*line_counter)++;sprintf(*str_ptr, "%x", bytecode[*line_counter]);}
+    // Check if the value is a memory immediate index
+    else if(val==23) 
+    {
+        // Increase the counter to get the next word
         (*line_counter)++;
-        char new_str[MAX_LINE_LEN];
-        new_str[0]='[';
+        // Copy the relevant formatting and the index to a new string
+        char * new_str=(char*)malloc(sizeof(char)*1);
+        strcpy(new_str, "[0x");
         char new_num[MAX_LINE_LEN];
-        sprintf(new_num, "%d", bytecode[*line_counter]);
+        sprintf(new_num, "%x", bytecode[*line_counter]);
         strcat(new_str, new_num);
         strcat(new_str, "]");
         *str_ptr=new_str;
+        //printf("sack\n");
     }
+    // Check if the value is a memory register index
     else if(val==24) {
+        // Increase the counter to get the next word
         (*line_counter)++;
+        // Copy the relevant formatting, and get the register string to a new string
         char * new_str=(char*)malloc(sizeof(char));
         strcpy(new_str, "[");
         char * new_num=strdup(reg_str[bytecode[*line_counter]]);
@@ -54,27 +65,41 @@ char * get_xy_str(char val, char ** str_ptr, int * line_counter)
         strcat(new_str, "]");
         *str_ptr=new_str;
     }
+    // Check if the value is a memory stack operation index
+    else if(val==25) {
+        // Increase the counter to get the next word
+        (*line_counter)++;
+        // Copy the relevant formatting, and get the register string to a new string
+        char * new_str=(char*)malloc(sizeof(char));
+        strcpy(new_str, "[");
+        char * new_num=strdup(xy_funcs[bytecode[*line_counter]-17]);
+        strcat(new_str, new_num);
+        strcat(new_str, "]");
+        *str_ptr=new_str;
+    }
+    // Else the xy value is null
     else{
         *str_ptr="";
     }
 }
 
+// Dissassemble the program line by line
 int dissasemble_prog()
 {
     unsigned short next_word;
     int line_counter=0;
-    while(bytecode[line_counter]!=0x0)
+    while(line_counter<MAX_PROG_LEN)
     {
+        // Get the bits for the opcode, x and y value
         char op = (bytecode[line_counter])&0x3F;
         char x = (bytecode[line_counter]>>6)&0x1F;
         char y = (bytecode[line_counter]>>11)&0x1F;
-        printf("x: %d y: %d\n",x,y);
         // Initialise strings that will be printed
-        char * op_str=get_op_str(op), *x_str=malloc(sizeof(char)*7), *y_str=malloc(sizeof(char)*7);
+        char * op_str=get_op_str(op), *x_str=malloc(sizeof(char)), *y_str=malloc(sizeof(char));
         // Get the strings for the x and y value
         get_xy_str(x,&x_str, &line_counter);
         get_xy_str(y,&y_str, &line_counter);
-        printf("%s %s %s\n",get_op_str(op),x_str,y_str);
+        if (op != 0x0) printf("%s %s %s\n",get_op_str(op),x_str,y_str);
         line_counter++;
     }
     return 0;
@@ -85,7 +110,7 @@ int load_prog(char * name)
     // Load the file and write the bytecode to an unsigned short array
     FILE * read_file;
     read_file=fopen(name,"rb");
-    fread(&bytecode,8,sizeof(unsigned short),read_file);
+    fread(&bytecode,MAX_PROG_LEN,sizeof(unsigned short),read_file);
     return 0;
 }
 

@@ -83,7 +83,7 @@ int write_bytecode(char * name)
     FILE * write_file;
     write_file=fopen(name,"wb");
     // Write the bytecode array to the file
-    fwrite(bytecode_array.array, sizeof(short), sizeof(bytecode_array.array), write_file);
+    fwrite(bytecode_array.array, sizeof(unsigned short), bytecode_array.used, write_file);
     // Close the file and free the bytecode
     fclose(write_file);
     free_bytecode_array(&bytecode_array);
@@ -128,7 +128,6 @@ int check_is_stackfunc(char * str)
 // Check if an xy atomic value is a signed integer
 int check_is_int(char * str)
 {
-
     int i;
     int flag=1;
     // Check if each integer isn't a digit, if so it's not an integer
@@ -137,8 +136,7 @@ int check_is_int(char * str)
     if (flag) return atoi(str);
     // Check if it is in hex format
     char * str_cpy=strdup(str);
-    int num = (int)strtol(str_cpy, NULL, 16);
-    if(num != 0) return num;
+    if (str_cpy[strspn(str_cpy, "0x123456789abcdefABCDEF")] == 0) return (int)strtol(str_cpy, NULL, 16);
     // Else not a number
     return 0;
 }
@@ -160,8 +158,7 @@ int check_is_mem(char * str)
     if(str[0]=='[' && str[strlen(str)-1]==']')
     {
         // Get the string without the bracket characters
-        char * mem_num=str;
-        mem_num++;
+        char * mem_num=(++str);
         mem_num[strlen(mem_num)-1]='\0';
         // Check whether the address is a number, register value, or stack function
         if(check_is_int(mem_num)) return 1;
@@ -232,6 +229,24 @@ int check_is_dat(char * str)
 // Get the x/y value for a given string, and assign the optional extended word values
 int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us_flag)
 {
+    // check if xy is a data macro
+    int dat = check_is_dat(xy);
+    if(dat) 
+    {
+        *s=dat;
+        *s_flag=1; 
+        return 20;
+    }
+
+    // check if xy is a label address
+    int label=check_is_label(xy);
+    if(label) 
+    {
+        *us=label;
+        *us_flag=1; 
+        return 20;
+    }
+
     // Check if xy is in registers
     int reg = check_reg_index(xy);
     if(reg) return reg;
@@ -248,7 +263,6 @@ int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us
         *s_flag=1;
         return 20;
     }
-
     // check if xy is an unsigned int
     int unum = check_is_uint(xy);
     if(unum) 
@@ -278,24 +292,6 @@ int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us
             case 2: {*s = check_reg_index(mem_addr); *s_flag=1; return 24; break;} 
             case 3: {*s = check_is_stackfunc(mem_addr); *s_flag=1; return 25; break;} 
         }
-    }
-
-    // check if xy is a data macro
-    int dat = check_is_dat(xy);
-    if(dat) 
-    {
-        *s=dat;
-        *s_flag=1; 
-        return 20;
-    }
-
-    // check if xy is a label address
-    int label=check_is_label(xy);
-    if(label) 
-    {
-        *us=label;
-        *us_flag=1; 
-        return 20;
     }
 
     return -1;
@@ -374,7 +370,8 @@ int load_prog(char* prog_name)
 	// Loop through each file line and add it to the prog array
 	while(fgets(prog[line_counter],MAX_LINE_LEN,file)!=NULL)
 	{
-        if(prog[line_counter][0]=='\n') break;
+        //if(prog[line_counter][0]=='\n') break;
+        if(prog[line_counter][0]=='\n') continue;
         // Remove comments from the line
         char *ptr;
         ptr = strchr(prog[line_counter], COMMENT_CHAR);
