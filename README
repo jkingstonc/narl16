@@ -48,6 +48,7 @@ Instructions
 ============
 
 * Instructions are all 16 bit values using little endian, the lower 8 bits are stored in a lower address memory than the upper 8
+* Each instruction takes up 2 words in memory, the lower for the opcodes, the higher for an immediate
 
 yyyyyxxxxx000000
 
@@ -82,59 +83,59 @@ Opcode table:
 ----------------------------------------------------------------------------------------------
 | Value | Name | Description                                                                 |
 |-------+------+-----------------------------------------------------------------------------|
-|  0x0  | NOP  | Signifies the PC to increment and skip this instruction                     |                    
+|  0x1  | NOP  | Signifies the PC to increment and skip this instruction                     |                    
 |-------+------+-----------------------------------------------------------------------------|
-|  0x1  | SET  | Sets x to y                                                                 |   
+|  0x2  | SET  | Sets x to y                                                                 |   
 |-------+------+-----------------------------------------------------------------------------|
-|  0x2  | ADD  | Sets x to x+y. If there is an overflow set $cr to 0x1 and save PC in stack  |                                                                 
+|  0x3  | ADD  | Sets x to x+y. If there is an overflow set $cr to 0x1 and save PC in stack  |                                                                 
 |-------+------+-----------------------------------------------------------------------------|
-|  0x3  | SUB  | Sets x to x-y. If there is an underflow set $cr to 0x2 and save PC in stack |        
+|  0x4  | SUB  | Sets x to x-y. If there is an underflow set $cr to 0x2 and save PC in stack |        
 |-------+------+-----------------------------------------------------------------------------|
-|  0x4  | MUL  | Sets x to x*y                                                               |
+|  0x5  | MUL  | Sets x to x*y                                                               |
 |-------+------+-----------------------------------------------------------------------------|
-|  0x5  | DIV  | Sets x to x/y                                                               |
+|  0x6  | DIV  | Sets x to x/y                                                               |
 |-------+------+-----------------------------------------------------------------------------|
-|  0x6  | AND  | Sets x to x AND y                                                           |
+|  0x7  | AND  | Sets x to x AND y                                                           |
 |-------+------+-----------------------------------------------------------------------------|
-|  0x7  | OR   | Sets x to x OR y                                                            |
+|  0x8  | OR   | Sets x to x OR y                                                            |
 |-------+------+-----------------------------------------------------------------------------|
-|  0x8  | XOR  | Sets x to x XOR y                                                           |
+|  0x9  | XOR  | Sets x to x XOR y                                                           |
 |-------+------+-----------------------------------------------------------------------------|
-|  0x9  | NOT  | Sets x to NOT x                                                             |
+|  0xA  | NOT  | Sets x to NOT x                                                             |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xA  | MOD  | Sets x to x mod y                                                           |
+|  0xB  | MOD  | Sets x to x mod y                                                           |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xB  | REM  | Sets x to the remainder of x / y                                            |
+|  0xC  | REM  | Sets x to the remainder of x / y                                            |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xC  | SRL  | Sets x to x SHIFT RIGHT LOGICAL y                                           |
+|  0xD  | SRL  | Sets x to x SHIFT RIGHT LOGICAL y                                           |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xD  | SLL  | Sets x to x SHIFT LEFT LOGCIAL y                                            |
+|  0xE  | SLL  | Sets x to x SHIFT LEFT LOGCIAL y                                            |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xE  | SRA  | Sets x to x SHIFT RIGHT ARITHMETIC y                                        |
+|  0xF  | SRA  | Sets x to x SHIFT RIGHT ARITHMETIC y                                        |
 |-------+------+-----------------------------------------------------------------------------|
-|  0xF  | SLA  | Sets x to x SHIFT LEFT ARITHMETIC y                                         |
+|  0x11 | SLA  | Sets x to x SHIFT LEFT ARITHMETIC y                                         |
 |-------+------+-----------------------------------------------------------------------------|
-|  0x11 | IEQ  | Perform next instruction only if x is equal to y                            |
+|  0x12 | IEQ  | Perform next instruction only if x is equal to y                            |
 |-------+------+-----------------------------------------------------------------------------|
-|  0x12 | INE  | Perform next instruction only if x is not equal to y                        |
+|  0x13 | INE  | Perform next instruction only if x is not equal to y                        |
 |-------+------+-----------------------------------------------------------------------------|
-|  0x13 | IGE  | Perform next instruction only if x is greater than or equal to y            |
+|  0x14 | IGE  | Perform next instruction only if x is greater than or equal to y            |
 |-------+------+-----------------------------------------------------------------------------|
-|  0x13 | IGT  | Perform next instruction only if x is greater than y                        |
+|  0x15 | IGT  | Perform next instruction only if x is greater than y                        |
 |-------+------+-----------------------------------------------------------------------------|
-|  0x14 | ILT  | Perform next instruction only if x is less than y                           |
+|  0x16 | ILT  | Perform next instruction only if x is less than y                           |
 |-------+------+-----------------------------------------------------------------------------|
-|  0x13 | ILE  | Perform next instruction only if x is less than or equal to y               |
+|  0x17 | ILE  | Perform next instruction only if x is less than or equal to y               |
 |-------+------+-----------------------------------------------------------------------------|
-|  0x15 | IBS  | Perform next instruction only if x and y are both non zero                  |
+|  0x18 | IBS  | Perform next instruction only if x and y are both non zero                  |
 |-------+------+-----------------------------------------------------------------------------|
-|  0x16 | INB  | Perform next instruction only if x and y are not both non zero              |
+|  0x19 | INB  | Perform next instruction only if x and y are not both non zero              |
 |-------+------+-----------------------------------------------------------------------------|
 |  0x1A | JMP  | Jump to the value in x                                                      |
 |-------+------+-----------------------------------------------------------------------------| 
 |  0x1B | JAL  | Push PC to stack and jump to the value in x                                 |
 |-------+------+-----------------------------------------------------------------------------|  
-|  0x1D | RTN  | Pop the stack and set PC to that address                                    |
+|  0x1C | RTN  | Pop the stack and set PC to that address                                    |
 |-------+------+-----------------------------------------------------------------------------|
 |  0x1D | SYS  | System call the function with arguments on the stack                        |
 |-------+------+-----------------------------------------------------------------------------|

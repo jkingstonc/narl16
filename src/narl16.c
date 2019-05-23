@@ -49,9 +49,9 @@ unsigned short get_next_bytecode()
 {
     unsigned short bytecode=0;
     unsigned char lower = memory[GET_PC()];
-    INCREMENT_PC(1);
-    unsigned char upper = memory[GET_PC()];
-    INCREMENT_PC(1);
+    // INCREMENT_PC(1);
+    unsigned char upper = memory[GET_PC()+1];
+    // INCREMENT_PC(1);
     bytecode=(bytecode|upper)<<8;
     bytecode|=lower;
     return bytecode;
@@ -127,6 +127,7 @@ int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag)
     else if(code>=20 && code<=25) 
     {
         // Get the next bytecode value
+        INCREMENT_PC(2);
         unsigned short imm=get_next_bytecode();
         switch(code)
         {
@@ -184,6 +185,7 @@ int execute_prog()
     while(running && GET_PC()<MEM_SIZE)
     {
         unsigned short bytecode=get_next_bytecode();
+        if(bytecode==0x1) running=0;
         // Get the opcode and the x and y values
         unsigned char op=bytecode&0x3F,x=(bytecode>>6)&0x1F,y=(bytecode>>11)&0x1F;
         unsigned short source_immediate=0,dest_immediate=0;
@@ -198,154 +200,176 @@ int execute_prog()
         switch(op)
         {
             case 0x0: {running=0;break;}
-            case 0x1: // SET
+            case 0x2: // SET
             {
                 *source_pointer=*dest_pointer;
+                INCREMENT_PC(2);
                 break;
             }
-            case 0x2: // ADD
+            case 0x3: // ADD
             {
                 *source_pointer+=*dest_pointer;
+                INCREMENT_PC(2);
                 break;
             }
-            case 0x3: // SUB
+            case 0x4: // SUB
             {
                 *source_pointer-=*dest_pointer;
+                INCREMENT_PC(2);
                 break;
             }
-            case 0x4: // MUL
+            case 0x5: // MUL
             {
                 *source_pointer*=*dest_pointer;
+                INCREMENT_PC(2);
                 break;
             }
-            case 0x5: // DIV
+            case 0x6: // DIV
             {
                 *source_pointer/=*dest_pointer;
+                INCREMENT_PC(2);
                 break;
             }
-            case 0x6: // AND
+            case 0x7: // AND
             {
                 *source_pointer&=*dest_pointer;
+                INCREMENT_PC(2);
                 break;
             }
-            case 0x7: // OR
+            case 0x8: // OR
             {
                 *source_pointer|=*dest_pointer;
+                INCREMENT_PC(2);
                 break;
             }
-            case 0x8: // XOR
+            case 0x9: // XOR
             {
                 *source_pointer^=*dest_pointer;
+                INCREMENT_PC(2);
                 break;
             }
-            case 0x9: // NOT
+            case 0xA: // NOT
             {
                 *source_pointer=~*(source_pointer);
+                INCREMENT_PC(2);
                 break;
             }
-            case 0xA: // MOD
+            case 0xB: // MOD
             {
                 *source_pointer%=*dest_pointer;
+                INCREMENT_PC(2);
                 break;
             }
-            case 0xB: // REM
+            case 0xC: // REM
             {
                 *source_pointer/=*dest_pointer;
+                INCREMENT_PC(2);
                 break;
             }
-            case 0xC: // SRL
+            case 0xD: // SRL
             {
                 *source_pointer=*source_pointer >> *dest_pointer;
+                INCREMENT_PC(2);
                 break;
             }
-            case 0xD: // SLL
+            case 0xE: // SLL
             {
                 *source_pointer=*source_pointer << *dest_pointer;
+                INCREMENT_PC(2);
                 break;
             }
-            case 0xE: // SRA
+            case 0xF: // SRA
             {
                 *source_pointer=*source_pointer >> *dest_pointer;
+                INCREMENT_PC(2);
                 break;
             }
-            case 0xF: // SLA
+            case 0x10: // SLA
             {
                 *source_pointer=*source_pointer << *dest_pointer;
+                INCREMENT_PC(2);
                 break;
             }
-            case 0x10: // IEQ
+            case 0x11: // IEQ
             {
                 // Skip over the next word if the values aren't equal
-                if(*source_pointer != *dest_pointer) INCREMENT_PC(2);
+                if(*source_pointer == *dest_pointer) INCREMENT_PC(2);
+                else INCREMENT_PC(4);
                 break;
             }
-            case 0x11: // INE
+            case 0x12: // INE
             {
                 // Skip over the next word if the values are equal
-                if(*source_pointer == *dest_pointer) INCREMENT_PC(2);
+                if(*source_pointer != *dest_pointer) INCREMENT_PC(2);
+                else INCREMENT_PC(4);
                 break;
             }
-            case 0x12: // IGE
+            case 0x13: // IGE
             {
                 // Skip over the next word if x isn't greater than or equal to y
-                if(*source_pointer < *dest_pointer) INCREMENT_PC(2);
+                if(*source_pointer >= *dest_pointer) INCREMENT_PC(2);
+                else INCREMENT_PC(4);
                 break;
             }
-            case 0x13: // IGT
+            case 0x14: // IGT
             {
                 // Skip over the next word if x isn't greater than y
-                if(*source_pointer <= *dest_pointer) INCREMENT_PC(2);
+                if(*source_pointer > *dest_pointer) INCREMENT_PC(2);
+                else INCREMENT_PC(4);
                 break;
             }
-            case 0x14: // ILT
+            case 0x15: // ILT
             {
                 // Skip over the next word if x isn't less than y
-                if(*source_pointer >= *dest_pointer) INCREMENT_PC(2);
+                if(*source_pointer < *dest_pointer) INCREMENT_PC(2);
+                else INCREMENT_PC(4);
                 break;
             }
-            case 0x15: // ILE
+            case 0x16: // ILE
             {
                 // Skip over the next word if x isn't less than or equal to y
-                if(*source_pointer > *dest_pointer) INCREMENT_PC(2);
+                if(*source_pointer <= *dest_pointer) INCREMENT_PC(2);
+                else INCREMENT_PC(4);
                 break;
             }
-            case 0x16: // IBS
+            case 0x17: // IBS
             {
                 // Skip over the next word if x and y arent set
-                if(!(*source_pointer) || !(*dest_pointer)) INCREMENT_PC(2);
-                break;
-            }
-            case 0x17: // INB
-            {
-                // Skip over the next word if x and y are set
                 if(*source_pointer && *dest_pointer) INCREMENT_PC(2);
+                else INCREMENT_PC(4);
                 break;
             }
-            case 0x18: // JMP
+            case 0x18: // INB
             {
+                // Skip over the next word if x and y arent set
+                if(!(*source_pointer && *dest_pointer)) INCREMENT_PC(2);
+                else INCREMENT_PC(4);
+                break;
+            }
+            case 0x19: // JMP
+            {
+                printf("jumping to: %x\n",*source_pointer);
                 // Jump to the destination
                 cpu.registers[PC]=*source_pointer;
                 break;
             }
-            case 0x19: // JAL
+            case 0x1A: // JAL
             {
                 // Push the program counter to the stack and jump
                 push_stack(GET_PC());
                 cpu.registers[PC]=*source_pointer;
                 break;
             }
-            case 0x1A: // RTN
+            case 0x1B: // RTN
             {
                 cpu.registers[PC]=pop_stack();
                 break;
             }
-            case 0x1B: // SYS
+            case 0x1C: // SYS
             {break;}
-            case 0x1C: // INT
+            case 0x1D: // INT
             {break;}
         }
-        
-
         // Check if we have reached a NOP
         if(bytecode == 0x0) break;
     }

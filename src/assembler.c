@@ -14,9 +14,6 @@ This file takes a .narl file as an input and assembles it to a binary
 #define COMMENT_CHAR ';'
 #define DATA_MACRO "dat"
 
-// Macro to convert a line number to a text address position
-#define LINE_TO_ADDR(line) (TEXT_ADDR+((line)*(2)))
-
 typedef struct {
     unsigned short * array;
     size_t used;
@@ -25,6 +22,8 @@ typedef struct {
 
 // The program string
 char prog[MAX_PROG_LEN][MAX_LINE_LEN];
+// Record how many words each line index contains
+int num_words[MAX_PROG_LEN];
 // Number of lines
 int prog_len;
 // Copy of the original program, used for macro searching
@@ -177,16 +176,16 @@ int check_is_label(char * str)
     strcat(lbl,str_cpy);
     lbl[strlen(lbl)]='\0';
     // Loop over every line and see if it contains a label
-    int i=0;
-    int macro_counter=0;
+    int i=0, macro_counter=0;
     while(i<prog_len)
     {
         // We have found the label as a substring to the line
-        if(strstr(original_prog[i], lbl) != NULL)
-        {
-            return LINE_TO_ADDR(i-macro_counter);
+        if(strstr(original_prog[i], lbl) != NULL && strchr(original_prog[i], '#') != NULL)
+        {   
+            // As each word is 2 bytes, we multiply by 2
+            return LINE_TO_ADDR((i*2) - (macro_counter*2));
         }
-        // If we are on a macro line, we want to skip it as it doesn't count as an address line
+        // // If we are on a macro line, we want to skip it as it doesn't count as an address line
         if(strstr(original_prog[i], "#") != NULL) macro_counter++;
         i++;
     }
@@ -309,7 +308,7 @@ int make_bytecode()
 	for(line_counter=0;line_counter<prog_len;line_counter++)
 	{
         // Check if the line is empty
-        if(prog[line_counter][0] == '\0') continue;
+        if(prog[line_counter][0] == '\0') {num_words[line_counter]=0;continue;};
         // Bytecode to be modified
         unsigned short bytecode=0;
         // The word we are in on the raw string
@@ -318,7 +317,7 @@ int make_bytecode()
         char * next = strtok(prog[line_counter]," ,\n");
 
         // Check if we are lexing macro
-        if(strcmp(next,"#")==0) continue;
+        if(strcmp(next,"#")==0) {num_words[line_counter]=0;continue;};
 
         // for either x or y, they may need an extra word for an immediate value
         int sx_flag=0, usx_flag=0, sy_flag=0, usy_flag=0;
@@ -345,6 +344,8 @@ int make_bytecode()
             next = strtok(NULL, " ,\n");
             counter++;
         }
+        // Record how many words this line takes
+        num_words[line_counter]=1;
         // Insert the bytecode to the bytecode array
         insert_bytecode_array(&bytecode_array,bytecode);
         // Insert optional multi-word immediates
@@ -352,6 +353,8 @@ int make_bytecode()
         else if(usx_flag)insert_bytecode_array(&bytecode_array,usx);
         if(sy_flag)insert_bytecode_array(&bytecode_array,sy);
         else if(usy_flag)insert_bytecode_array(&bytecode_array,usy);
+        // Insert a bytecode value of 0 for extra
+        if(!sx_flag && !usx_flag && !sy_flag && !usy_flag)insert_bytecode_array(&bytecode_array,(unsigned short)0x0);
 	}
     // Insert a NOP opeartor to the end
     insert_bytecode_array(&bytecode_array,(unsigned short) 0x0);

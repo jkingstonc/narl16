@@ -27,6 +27,9 @@ Relevant information about the ISA
 #define IA 2
 #define CR 3
 
+// Macro to convert a line number to a text address position
+#define LINE_TO_ADDR(line) (TEXT_ADDR+((line)*(2)))
+
 // Strings corresponding to indexes of opcodes
 const char *opcodes[] = 
     {"NIL", "NOP","SET","ADD","SUB","MUL","DIV","AND","OR","XOR","NOT",

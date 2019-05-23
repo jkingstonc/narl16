@@ -35,7 +35,7 @@ char * get_xy_str(char val, char ** str_ptr, int * line_counter)
         }
     }
     // Check if the value is a signed immediate
-    else if(val==20) {(*line_counter)++; sprintf(*str_ptr, "%x", bytecode[*line_counter]);}
+    else if(val==20) {(*line_counter)++;sprintf(*str_ptr, "%x", bytecode[*line_counter]);}
     // Check if the value is an unsigned immediate
     else if(val==21) {(*line_counter)++;sprintf(*str_ptr, "%x", bytecode[*line_counter]);}
     // Check if the value is a memory immediate index
@@ -90,8 +90,10 @@ int dissasemble_prog()
     int line_counter=0;
     while(line_counter<MAX_PROG_LEN)
     {
+        
         // Get the bits for the opcode, x and y value
         char op = (bytecode[line_counter])&0x3F;
+        if (op != 0x0) printf("[%x] ",LINE_TO_ADDR(line_counter));
         char x = (bytecode[line_counter]>>6)&0x1F;
         char y = (bytecode[line_counter]>>11)&0x1F;
         // Initialise strings that will be printed
