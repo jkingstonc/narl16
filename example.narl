@@ -1,11 +1,13 @@
-SET r2, 1
+# dat loop_count 50     ; how many times we should loop
+# dat done 1            ; signify we are done
+
 SET r1, 1
 # loop
-ILT r1, 50
+ILT r1, loop_count
     JMP add
 JMP end
 # add
 ADD r1, 1
 JMP loop
 # end
-SET r2, 1
+SET r2, done
