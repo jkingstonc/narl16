@@ -46,13 +46,12 @@ void print_registers()
     }
 }
 
+// Get the next word in memory
 unsigned short get_next_bytecode()
 {
     unsigned short bytecode=0;
     unsigned char lower = memory[GET_PC()];
-    // INCREMENT_PC(1);
     unsigned char upper = memory[GET_PC()+1];
-    // INCREMENT_PC(1);
     bytecode=(bytecode|upper)<<8;
     bytecode|=lower;
     return bytecode;
@@ -61,14 +60,12 @@ unsigned short get_next_bytecode()
 int push_stack(unsigned short value)
 {
     memory[GET_SP()]=value;
-    // Stack pointer deals in words not bytes [1 word = 2 bytes]
-    DECREMENT_SP(2);
+    DECREMENT_SP(WORD_SIZE);
 }
 unsigned short pop_stack()
 {
     unsigned char value = memory[GET_SP()];
-    // Stack pointer deals in words not bytes [1 word = 2 bytes]
-    INCREMENT_SP(2);
+    INCREMENT_SP(WORD_SIZE);
     return value;
 }
 unsigned short peek_stack()
@@ -80,100 +77,27 @@ unsigned short peek_stack()
 // Either return an immediate value, or a pointer for an immediate location
 int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag)
 {
-    // XY value that doesn't need another extended word
-    if(code>=0 && code <=19)
-    {
-        switch(code)
-        {
-            case 0:
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-            case 5:
-            case 6:
-            case 7:
-            case 8:
-            case 9:
-            case 10:
-            case 11:
-            case 12:
-            case 13:
-            case 14: 
-            case 15:
-            case 16:
-            {
-                if(pointer_flag) { *immediate=&cpu.registers[code];}else{ **immediate=cpu.registers[code];}
-                break;
-            } // Registers
-            case 17:
-            {
-                // If we are setting a push, set the immediate destination to the next sp value
-                if(pointer_flag) {DECREMENT_SP(2); *immediate=(unsigned short *)&(memory[cpu.registers[SP]]); } else { **immediate = 0; }
-                break;
-            } // Push
-            case 18:
-            {
-                if(pointer_flag) {}else{ **immediate=pop_stack(); }
-                break;
-            } // Pop
-            case 19:
-            {
-                if(pointer_flag) {}else{ **immediate=peek_stack();}
-                break;
-            } // Peek
-        }
-    }
+    // registers
+    if (code>=0 && code <=16) { if(pointer_flag) { *immediate=&cpu.registers[code];}else{ **immediate=cpu.registers[code];}}
+    // If we are setting a push, set the immediate destination to the next sp value
+    else if(code==17) if(pointer_flag) {DECREMENT_SP(WORD_SIZE); *immediate=(unsigned short *)&(memory[cpu.registers[SP]]); } else { **immediate = 0; }
+    // POP
+    else if(code==18) {if(!pointer_flag) { **immediate=pop_stack();}}
+    // PEEK
+    else if(code==19) {if(!pointer_flag) { **immediate=peek_stack();}}
     // Check if the xy value is specifying we are using an extended-word immediate
     else if(code>=20 && code<=25) 
     {
         // Get the next bytecode value
-        INCREMENT_PC(2);
+        INCREMENT_PC(WORD_SIZE);
         unsigned short imm=get_next_bytecode();
-        switch(code)
+        if(code==20 || code == 21) **immediate=imm;
+        else if(code==23) if(pointer_flag) { *immediate=(unsigned short *)&memory[imm]; } else{ **immediate=memory[imm]; }
+        else if(code==24) if(pointer_flag) { *immediate=(unsigned short *)&memory[cpu.registers[imm]]; } else{ **immediate=memory[cpu.registers[imm]]; }
+        else if(code==25)
         {
-            case 20: 
-            {   
-                **immediate=imm;
-                break; 
-            } // Signed immediate
-            case 21: 
-            {
-                **immediate=imm;
-                break; 
-            } // Unsigned immediate
-            case 22: break; // Half prescision IEE 754 fp
-            case 23: 
-            {
-                if(pointer_flag) { *immediate=(unsigned short *)&memory[imm]; } else{ **immediate=memory[imm]; }
-                break;
-            } // Memory immediate
-            case 24:
-            {
-                if(pointer_flag) { *immediate=(unsigned short *)&memory[cpu.registers[imm]]; } else{ **immediate=memory[cpu.registers[imm]]; }
-                break;
-            } // Memory register contents
-            case 25:
-            {
-                switch(imm)
-                {
-                    case 17: 
-                    {
-                        
-                        break; 
-                    } // PSH
-                    case 18: 
-                    {
-                        if(pointer_flag) { *immediate=(unsigned short *)&memory[pop_stack()]; } else{ **immediate=memory[pop_stack()]; }
-                        break; 
-                    } // POP
-                    case 19: 
-                    {
-                        if(pointer_flag) { *immediate=(unsigned short *)&memory[peek_stack()]; } else{ **immediate=memory[peek_stack()]; }
-                        break;
-                    } // PEK
-                }
-            } // Memory stack contents
+            if(imm==18) if(pointer_flag) { *immediate=(unsigned short *)&memory[pop_stack()]; } else{ **immediate=memory[pop_stack()]; }
+            else if(imm==19) if(pointer_flag) { *immediate=(unsigned short *)&memory[peek_stack()]; } else{ **immediate=memory[peek_stack()]; }
         }
     }
     return 1;
@@ -184,75 +108,69 @@ int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag)
 // Functions for opcode operations
 int res_op(unsigned short ** x, unsigned short **y){return 0;}
 int nop_op(unsigned short ** x, unsigned short **y){return 0;}
-int set_op(unsigned short ** x, unsigned short **y){**x=**y;INCREMENT_PC(2);return 0;}
-int add_op(unsigned short ** x, unsigned short **y){**x+=**y;INCREMENT_PC(2);return 0;}
-int sub_op(unsigned short ** x, unsigned short **y){**x-=**y;INCREMENT_PC(2);return 0;}
-int mul_op(unsigned short ** x, unsigned short **y){**x*=**y;INCREMENT_PC(2);return 0;}
-int div_op(unsigned short ** x, unsigned short **y){**x/=**y;INCREMENT_PC(2);return 0;}
-int and_op(unsigned short ** x, unsigned short **y){**x=**x&**y;INCREMENT_PC(2);return 0;}
-int or_op(unsigned short ** x, unsigned short **y) {**x=**x|**y;INCREMENT_PC(2);return 0;}
-int xor_op(unsigned short ** x, unsigned short **y){**x=**x^**y;INCREMENT_PC(2);return 0;}
-int not_op(unsigned short ** x, unsigned short **y){**x=~(**x);INCREMENT_PC(2);return 0;}
-int mod_op(unsigned short ** x, unsigned short **y){**x%=**y;INCREMENT_PC(2);return 0;}
-int rem_op(unsigned short ** x, unsigned short **y){**x/=**y;INCREMENT_PC(2);return 0;}
-int srl_op(unsigned short ** x, unsigned short **y){**x=**x>>**y;INCREMENT_PC(2);return 0;}
-int sll_op(unsigned short ** x, unsigned short **y){**x=**x<<**y;INCREMENT_PC(2);return 0;}
-int sra_op(unsigned short ** x, unsigned short **y){**x=**x>>**y;INCREMENT_PC(2);return 0;}
-int sla_op(unsigned short ** x, unsigned short **y){**x=**x<<**y;INCREMENT_PC(2);return 0;}
+int set_op(unsigned short ** x, unsigned short **y){**x=**y;INCREMENT_PC(WORD_SIZE);return 0;}
+int add_op(unsigned short ** x, unsigned short **y){**x+=**y;INCREMENT_PC(WORD_SIZE);return 0;}
+int sub_op(unsigned short ** x, unsigned short **y){**x-=**y;INCREMENT_PC(WORD_SIZE);return 0;}
+int mul_op(unsigned short ** x, unsigned short **y){**x*=**y;INCREMENT_PC(WORD_SIZE);return 0;}
+int div_op(unsigned short ** x, unsigned short **y){**x/=**y;INCREMENT_PC(WORD_SIZE);return 0;}
+int and_op(unsigned short ** x, unsigned short **y){**x=**x&**y;INCREMENT_PC(WORD_SIZE);return 0;}
+int or_op(unsigned short ** x, unsigned short **y) {**x=**x|**y;INCREMENT_PC(WORD_SIZE);return 0;}
+int xor_op(unsigned short ** x, unsigned short **y){**x=**x^**y;INCREMENT_PC(WORD_SIZE);return 0;}
+int not_op(unsigned short ** x, unsigned short **y){**x=~(**x);INCREMENT_PC(WORD_SIZE);return 0;}
+int mod_op(unsigned short ** x, unsigned short **y){**x%=**y;INCREMENT_PC(WORD_SIZE);return 0;}
+int rem_op(unsigned short ** x, unsigned short **y){**x/=**y;INCREMENT_PC(WORD_SIZE);return 0;}
+int srl_op(unsigned short ** x, unsigned short **y){**x=**x>>**y;INCREMENT_PC(WORD_SIZE);return 0;}
+int sll_op(unsigned short ** x, unsigned short **y){**x=**x<<**y;INCREMENT_PC(WORD_SIZE);return 0;}
+int sra_op(unsigned short ** x, unsigned short **y){**x=**x>>**y;INCREMENT_PC(WORD_SIZE);return 0;}
+int sla_op(unsigned short ** x, unsigned short **y){**x=**x<<**y;INCREMENT_PC(WORD_SIZE);return 0;}
 int ieq_op(unsigned short ** x, unsigned short **y)
 {
-    // Skip over the next word if x isn't greater than or equal to y
-    if(**x == **y) INCREMENT_PC(2);
-    else INCREMENT_PC(4);
+    if(**x == **y) INCREMENT_PC(WORD_SIZE);
+    else INCREMENT_PC(WORD_SIZE*2);
     return 0;
 }
 int ine_op(unsigned short ** x, unsigned short **y)
 {
-    // Skip over the next word if x isn't greater than or equal to y
-    if(**x != **y) INCREMENT_PC(2);
-    else INCREMENT_PC(4);
+    if(**x != **y) INCREMENT_PC(WORD_SIZE);
+    else INCREMENT_PC(WORD_SIZE*2);
     return 0;
 }
 int ige_op(unsigned short ** x, unsigned short **y)
 {
-    // Skip over the next word if x isn't greater than or equal to y
-    if(**x >= **y) INCREMENT_PC(2);
-    else INCREMENT_PC(4);
+    if(**x >= **y) INCREMENT_PC(WORD_SIZE);
+    else INCREMENT_PC(WORD_SIZE*2);
     return 0;
 }
 int igt_op(unsigned short ** x, unsigned short **y)
 {
-    // Skip over the next word if x isn't greater than or equal to y
-    if(**x > **y) INCREMENT_PC(2);
-    else INCREMENT_PC(4);
+    if(**x > **y) INCREMENT_PC(WORD_SIZE);
+    else INCREMENT_PC(WORD_SIZE*2);
     return 0;
 }
 int ilt_op(unsigned short ** x, unsigned short **y)
 {
-    // Skip over the next word if x isn't greater than or equal to y
-    if(**x < **y) INCREMENT_PC(2);
-    else INCREMENT_PC(4);
+    if(**x < **y) INCREMENT_PC(WORD_SIZE);
+    else INCREMENT_PC(WORD_SIZE*2);
     return 0;
 }
 int ile_op(unsigned short ** x, unsigned short **y)
 {
-    // Skip over the next word if x isn't greater than or equal to y
-    if(**x <= **y) INCREMENT_PC(2);
-    else INCREMENT_PC(4);
+    if(**x <= **y) INCREMENT_PC(WORD_SIZE);
+    else INCREMENT_PC(WORD_SIZE*2);
     return 0;
 }
 int ibs_op(unsigned short ** x, unsigned short **y)
 {
     // Skip over the next word if x isn't greater than or equal to y
-    if(**x && **y) INCREMENT_PC(2);
-    else INCREMENT_PC(4);
+    if(**x && **y) INCREMENT_PC(WORD_SIZE);
+    else INCREMENT_PC(WORD_SIZE*2);
     return 0;
 }
 int inb_op(unsigned short ** x, unsigned short **y)
 {
     // Skip over the next word if x isn't greater than or equal to y
-    if(!(**x && **y)) INCREMENT_PC(2);
-    else INCREMENT_PC(4);
+    if(!(**x && **y)) INCREMENT_PC(WORD_SIZE);
+    else INCREMENT_PC(WORD_SIZE*2);
     return 0;
 }
 int jmp_op(unsigned short ** x, unsigned short **y)
@@ -282,25 +200,26 @@ int (*opcode_functions[MAX_OP])(unsigned short ** x, unsigned short ** y) =
     igt_op, ilt_op, ile_op, ibs_op, inb_op, jmp_op, jal_op, rtn_op, sys_op, int_op
 };
 
+// Execute the emulator program
 int execute_prog()
 {
-    int running =1;
     // Run the FDE cycle
-    while(running && GET_PC()<MEM_SIZE)
+    while(1)
     {
+        // Ensure we cannot go out of bounds in memory
+        if(GET_PC()<0 || GET_PC()>MEM_SIZE) break;
         unsigned short bytecode=get_next_bytecode();
-        if(bytecode==0x1) running=0;
         // Get the opcode and the x and y values
         unsigned char op=bytecode&0x3F,x=(bytecode>>6)&0x1F,y=(bytecode>>11)&0x1F;
         unsigned short source_immediate=0,dest_immediate=0;
         // x is always a destination, and never a value
         unsigned short * source_pointer=&source_immediate;
         unsigned short * dest_pointer=&dest_immediate;
-
         // Check if we need an immediate value for x and y, and if so set it
         get_immediate_value(x, &source_pointer, 1);
         get_immediate_value(y, &dest_pointer,0);
         if(op==0x0 || op==0x1 || bytecode==0x0 || bytecode==0x1) break;
+        // Call the relevant opcode function
         (*opcode_functions[op]) (&source_pointer, &dest_pointer);
     }
     print_registers();

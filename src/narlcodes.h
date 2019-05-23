@@ -10,6 +10,9 @@ Relevant information about the ISA
 #define SOURCE_EXTENSION "narl"
 #define BINARY_EXTENSION "narlb"
 
+// Word size in bytes
+#define WORD_SIZE 2
+
 // Base address for memory locations
 #define TEXT_ADDR 0x2000
 #define STATIC_ADDR 0x6000
