@@ -74,7 +74,11 @@ The ranges below specify what value range means in the xy position [# means an e
 *# 25 maps to memory stack operation
 
 
-The next instruction after (when a numeric value is required) will be a full-word immediate value
+The next instruction after every instrucion will be a full word immediate value.
+(The reason for this is that instructions are always 2-word aligned in memory,
+as some instructions need an extra word for immediate and other don't. This makes
+implementations of the ISA much easier [althought memory required for programs is 
+on average 1.5 x larger])
 
 
 Opcode table:
@@ -82,6 +86,8 @@ Opcode table:
 
 ----------------------------------------------------------------------------------------------
 | Value | Name | Description                                                                 |
+|-------+------+-----------------------------------------------------------------------------|
+|  0x0  | NIL  | Currently signifies for the emulator to shut down                           |                    
 |-------+------+-----------------------------------------------------------------------------|
 |  0x1  | NOP  | Signifies the PC to increment and skip this instruction                     |                    
 |-------+------+-----------------------------------------------------------------------------|
