@@ -162,11 +162,11 @@ int check_is_mem(char * str)
         // Get the string without the bracket characters
         char * mem_num=str;
         mem_num++;
-        mem_num[strlen(mem_num)-1]=0;
+        mem_num[strlen(mem_num)-1]='\0';
         // Check whether the address is a number, register value, or stack function
-        if(check_is_int(mem_num) != -1) return 1;
-        if(check_reg_index(mem_num) != -1) return 2;
-        if(check_is_stackfunc(mem_num) != -1) return 3;
+        if(check_is_int(mem_num)) return 1;
+        if(check_reg_index(mem_num)) return 2;
+        if(check_is_stackfunc(mem_num)) return 3;
     }
     return 0;
 }
@@ -274,9 +274,9 @@ int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us
         // Check what type of address specifier we have (immediate, register, stack operation function)
         switch(mem)
         {
-            case 1: {*s = check_is_int(mem_addr); *s_flag=1; return 23; }
-            case 2: {*s = check_reg_index(mem_addr); *s_flag=1; return 24; } 
-            case 3: {*s = check_is_stackfunc(mem_addr); *s_flag=1; return 25; } 
+            case 1: {*s = check_is_int(mem_addr); *s_flag=1; return 23; break;}
+            case 2: {*s = check_reg_index(mem_addr); *s_flag=1; return 24; break;} 
+            case 3: {*s = check_is_stackfunc(mem_addr); *s_flag=1; return 25; break;} 
         }
     }
 
