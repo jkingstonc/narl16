@@ -137,8 +137,8 @@ int check_is_int(char * str)
     // Check if it is in hex format
     char * str_cpy=strdup(str);
     if (str_cpy[strspn(str_cpy, "0x123456789abcdefABCDEF")] == 0) return (int)strtol(str_cpy, NULL, 16);
-    // Else not a number
-    return 0;
+    // Else not a number [return -1 as 0 is a valid number]
+    return -1;
 }
 
 // Check if an xy atomic value is an unsigned integer
@@ -148,7 +148,8 @@ int check_is_uint(char * str)
     // If the string is prefixed with a 'u' and the rest is an integer
     // Not the pointer has to be decremented as we previously incremented it to get the check val
     if((--str)[0]=='u' && check) return check;
-    return 0;
+    // Else not a number [return -1 as 0 is a valid number]
+    return -1;
 }
 
 // Check if an xy atomic value is a memory address
@@ -161,7 +162,7 @@ int check_is_mem(char * str)
         char * mem_num=(++str);
         mem_num[strlen(mem_num)-1]='\0';
         // Check whether the address is a number, register value, or stack function
-        if(check_is_int(mem_num)) return 1;
+        if(check_is_int(mem_num)>=0) return 1;
         if(check_reg_index(mem_num)) return 2;
         if(check_is_stackfunc(mem_num)) return 3;
     }
@@ -257,7 +258,8 @@ int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us
 
     // check if xy is a signed int
     int num = check_is_int(xy);
-    if(num) 
+    // Check > 0 as zero is a valid number
+    if(num >= 0) 
     {
         *s=num;
         *s_flag=1;
@@ -265,7 +267,8 @@ int get_xy_val(char * xy, short * s, unsigned short * us, int * s_flag, int * us
     }
     // check if xy is an unsigned int
     int unum = check_is_uint(xy);
-    if(unum) 
+    // Check > 0 as zero is a valid number
+    if(unum >= 0) 
     {
         *us=unum;
         *us_flag=1;
