@@ -75,7 +75,7 @@ unsigned short peek_stack()
 }
 
 // Either return an immediate value, or a pointer for an immediate location
-int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag)
+int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag, int * skip_word_count)
 {
     // registers
     if (code>=0 && code <=16) { if(pointer_flag) { *immediate=&cpu.registers[code];}else{ **immediate=cpu.registers[code];}}
@@ -88,6 +88,7 @@ int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag)
     // Check if the xy value is specifying we are using an extended-word immediate
     else if(code>=20 && code<=25) 
     {
+        *skip_word_count+=1;
         // Get the next bytecode value
         INCREMENT_PC(WORD_SIZE);
         unsigned short imm=get_next_bytecode();
@@ -99,6 +100,7 @@ int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag)
             if(imm==18) if(pointer_flag) { *immediate=(unsigned short *)&memory[pop_stack()]; } else{ **immediate=memory[pop_stack()]; }
             else if(imm==19) if(pointer_flag) { *immediate=(unsigned short *)&memory[peek_stack()]; } else{ **immediate=memory[peek_stack()]; }
         }
+        INCREMENT_PC(-WORD_SIZE);
     }
     return 1;
 }
@@ -206,6 +208,7 @@ int execute_prog()
     // Run the FDE cycle
     while(1)
     {
+        printf("%x\n",GET_PC());
         // Ensure we cannot go out of bounds in memory
         if(GET_PC()<0 || GET_PC()>MEM_SIZE) break;
         unsigned short bytecode=get_next_bytecode();
@@ -215,9 +218,12 @@ int execute_prog()
         // x is always a destination, and never a value
         unsigned short * source_pointer=&source_immediate;
         unsigned short * dest_pointer=&dest_immediate;
+        int skip_word_count=0;
         // Check if we need an immediate value for x and y, and if so set it
-        get_immediate_value(x, &source_pointer, 1);
-        get_immediate_value(y, &dest_pointer,0);
+        get_immediate_value(x, &source_pointer, 1, &skip_word_count);
+        get_immediate_value(y, &dest_pointer,0, &skip_word_count);
+        // Check how many immediate words were after the bytecode word, and increment the PC accordingly
+        if(skip_word_count==0) INCREMENT_PC(WORD_SIZE); else (INCREMENT_PC(WORD_SIZE*skip_word_count));
         if(op==NIL || bytecode==NIL) break;
         // Call the relevant opcode function
         (*opcode_functions[op]) (&source_pointer, &dest_pointer);
