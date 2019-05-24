@@ -14,11 +14,13 @@ Relevant information about the ISA
 #define WORD_SIZE 2
 
 // Base address for memory locations
-#define TEXT_ADDR 0x2000
-#define STATIC_ADDR 0x6000
-#define HEAP_ADDR 0x7000
-#define STACK_ADDR 0xE000
+
 #define VIDEO_ADDR 0xF000
+#define STACK_ADDR 0xE000
+#define HEAP_ADDR 0x8000
+#define STATIC_ADDR 0x7000
+#define TEXT_ADDR 0x4000
+#define OS_ADDR 0x0
 #define MEM_SIZE 0x10000
 
 #define MAX_PROG_LEN 256
@@ -28,9 +30,11 @@ Relevant information about the ISA
 #define MAX_XY_FUNCS 3
 #define MAX_REG 16
 
+#define NIL 0
+
 #define PC 0
 #define SP 1
-#define IA 2
+#define IR 2
 #define CR 3
 
 // Macro to convert a line number to a text address position
@@ -42,7 +46,7 @@ const char *opcodes[] =
      "MOD", "REM", "SRL", "SLL", "SRA", "SLA", "IEQ", "INE", "IGE", 
      "IGT", "ILT", "ILE", "IBS", "INB", "JMP", "JAL", "RTN", "SYS", "INT"};
 // Strings corresponding to indexes in the registers
-const char *reg_str[] = {"pc", "sp", "ia", "cr", "r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12"};
+const char *reg_str[] = {"pc", "sp", "ir", "cr", "r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12"};
 // Strings corresponding to xy available stack functions
 const char *xy_funcs[] = {"PSH","POP","PEK"};
 

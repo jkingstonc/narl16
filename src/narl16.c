@@ -218,9 +218,11 @@ int execute_prog()
         // Check if we need an immediate value for x and y, and if so set it
         get_immediate_value(x, &source_pointer, 1);
         get_immediate_value(y, &dest_pointer,0);
-        if(op==0x0 || op==0x1 || bytecode==0x0 || bytecode==0x1) break;
+        if(op==NIL || bytecode==NIL) break;
         // Call the relevant opcode function
         (*opcode_functions[op]) (&source_pointer, &dest_pointer);
+        // Check if the ir register is non 0
+        if(cpu.registers[IR]) printf("Interrupt: %x\n", cpu.registers[IR]);
     }
     print_registers();
     // Free relevant memory
@@ -234,10 +236,15 @@ int setup_emulator()
     memory = (unsigned char*)malloc(sizeof(unsigned char)*MEM_SIZE);
     unsigned short memory_counter = TEXT_ADDR;
     int i=0;
-    while(bytecode[i]!=0x0)
+    unsigned char previous_op=NIL;
+    // Currently, we have to loop over every bytecode
+    // This is becuase a 0x0 could be an integer value, and not NOP operation :(
+    while(1)
     {
         // Get the lower 8 bits of the bytecode and write it to the next memory address
         unsigned char lower = (bytecode[i])&0xFF;
+        // Check if we have reached a NIL instruction
+        if(previous_op==NIL && lower==NIL) break;
         memory[memory_counter]=lower;
         memory_counter+=1;
         // printf("Written to memory location %x: %x\n",memory_counter,lower);
@@ -245,7 +252,8 @@ int setup_emulator()
         unsigned char upper = ((bytecode[i])>>8);
         memory[memory_counter]=upper;
         memory_counter+=1;
-        // printf("Written to memory location %x: %x\n",memory_counter,upper);
+        // Marking the previous operation for break checking
+        previous_op=lower;
         i++;
     }
 

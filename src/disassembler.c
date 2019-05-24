@@ -88,7 +88,7 @@ int dissasemble_prog()
 {
     unsigned short next_word;
     int line_counter=0;
-    while(line_counter<MAX_PROG_LEN)
+    while(1)
     {
         
         // Get the bits for the opcode, x and y value
@@ -101,7 +101,8 @@ int dissasemble_prog()
         // Get the strings for the x and y value
         get_xy_str(x,&x_str, &line_counter);
         get_xy_str(y,&y_str, &line_counter);
-        if (op != 0x0) printf("%s %s %s\n",get_op_str(op),x_str,y_str);
+        if (op != NIL) printf("%s %s %s\n",get_op_str(op),x_str,y_str);
+        else break;
         line_counter++;
     }
     return 0;
