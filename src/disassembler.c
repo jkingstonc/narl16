@@ -88,11 +88,13 @@ int dissasemble_prog()
 {
     unsigned short next_word;
     int line_counter=0;
+    unsigned char previous_op=NIL;
     while(1)
     {
         
         // Get the bits for the opcode, x and y value
         char op = (bytecode[line_counter])&0x3F;
+        if(previous_op==NIL && op==NIL) break;
         if (op != 0x0) printf("[%x] ",LINE_TO_ADDR(line_counter));
         char x = (bytecode[line_counter]>>6)&0x1F;
         char y = (bytecode[line_counter]>>11)&0x1F;
@@ -101,8 +103,8 @@ int dissasemble_prog()
         // Get the strings for the x and y value
         get_xy_str(x,&x_str, &line_counter);
         get_xy_str(y,&y_str, &line_counter);
-        if (op != NIL) printf("%s %s %s\n",get_op_str(op),x_str,y_str);
-        else break;
+        if(bytecode[line_counter]!=NIL)printf("%s %s %s\n",get_op_str(op),x_str,y_str);
+        previous_op=op;
         line_counter++;
     }
     return 0;

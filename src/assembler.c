@@ -99,7 +99,7 @@ int check_op_index(char * op)
     {
         if(strcmp(op, opcodes[i])==0) return i;
     }
-    return 0;
+    return -1;
 }
 
 // Check if an xy atomic value is a register
