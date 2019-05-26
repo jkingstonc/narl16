@@ -90,6 +90,29 @@ int write_bytecode(char * name)
     return 0;
 }
 
+void trim_leading_spaces(char * str)
+{
+    int index, i, j;
+    index = 0;
+    // Find last index of whitespace character
+    while(str[index] == ' ' || str[index] == '\t' || str[index] == '\n')
+    {
+        index++;
+    }
+    if(index != 0)
+    {
+        // Shift all trailing characters to the left
+        i = 0;
+        while(str[i + index] != '\0')
+        {
+            str[i] = str[i + index];
+            i++;
+        }
+        // Add null terminator to the string
+        str[i] = '\0';
+    }
+}
+
 // Check if an opcode string exists and return it's index
 int check_op_index(char * op)
 {
@@ -177,16 +200,18 @@ int check_is_label(char * str)
     strcat(lbl,str_cpy);
     lbl[strlen(lbl)]='\0';
     // Loop over every line and see if it contains a label
-    int i=0, macro_counter=0;
+    int i=0, macro_counter=0, comment_counter=0;
     while(i<prog_len)
     {
         // We have found the label as a substring to the line
         if(strstr(original_prog[i], lbl) != NULL && strchr(original_prog[i], '#') != NULL)
         {   
-            return LINE_TO_ADDR(i-macro_counter);
+            return LINE_TO_ADDR(i-macro_counter-comment_counter);
         }
         // If we are on a macro line, we want to skip it as it doesn't count as an address line
         if(strstr(original_prog[i], "#") != NULL) macro_counter++;
+        else if(!strcmp(original_prog[i], "")) comment_counter++;
+
         i++;
     }
     free(str_cpy);
@@ -310,7 +335,7 @@ int make_bytecode()
 	for(line_counter=0;line_counter<prog_len;line_counter++)
 	{
         // Check if the line is empty
-        if(prog[line_counter][0] == '\0') {num_words[line_counter]=0;continue;};
+        if(prog[line_counter][0] == '\0') continue;
         // Bytecode to be modified
         unsigned short bytecode=0;
         // The word we are in on the raw string
@@ -319,7 +344,7 @@ int make_bytecode()
         char * next = strtok(prog[line_counter]," ,\n");
 
         // Check if we are lexing macro
-        if(strcmp(next,"#")==0) {num_words[line_counter]=0;continue;};
+        if(strcmp(next,"#")==0) continue;
 
         // for either x or y, they may need an extra word for an immediate value
         int sx_flag=0, usx_flag=0, sy_flag=0, usy_flag=0;
@@ -377,7 +402,8 @@ int load_prog(char* prog_name)
 	// Loop through each file line and add it to the prog array
 	while(fgets(prog[line_counter],MAX_LINE_LEN,file)!=NULL)
 	{
-        //if(prog[line_counter][0]=='\n') break;
+        // trim all leading spaces
+        trim_leading_spaces(prog[line_counter]);
         if(prog[line_counter][0]=='\n') continue;
         // Remove comments from the line
         char *ptr;
