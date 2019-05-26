@@ -75,7 +75,7 @@ unsigned short peek_stack()
 }
 
 // Either return an immediate value, or a pointer for an immediate location
-int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag, int * skip_word_count)
+int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag)
 {
     // registers
     if (code>=0 && code <=16) { if(pointer_flag) { *immediate=&cpu.registers[code];}else{ **immediate=cpu.registers[code];}}
@@ -88,9 +88,6 @@ int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag,
     // Check if the xy value is specifying we are using an extended-word immediate
     else if(code>=20 && code<=25) 
     {
-        *skip_word_count+=1;
-        // Get the next bytecode value
-        INCREMENT_PC(WORD_SIZE);
         unsigned short imm=get_next_bytecode();
         if(code==20 || code == 21) **immediate=imm;
         else if(code==23) if(pointer_flag) { *immediate=(unsigned short *)&memory[imm]; } else{ **immediate=memory[imm]; }
@@ -100,7 +97,6 @@ int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag,
             if(imm==18) if(pointer_flag) { *immediate=(unsigned short *)&memory[pop_stack()]; } else{ **immediate=memory[pop_stack()]; }
             else if(imm==19) if(pointer_flag) { *immediate=(unsigned short *)&memory[peek_stack()]; } else{ **immediate=memory[peek_stack()]; }
         }
-        INCREMENT_PC(-WORD_SIZE);
     }
     return 1;
 }
@@ -110,69 +106,69 @@ int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag,
 // Functions for opcode operations
 int res_op(unsigned short ** x, unsigned short **y){return 0;}
 int nop_op(unsigned short ** x, unsigned short **y){return 0;}
-int set_op(unsigned short ** x, unsigned short **y){**x=**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
-int add_op(unsigned short ** x, unsigned short **y){**x+=**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
-int sub_op(unsigned short ** x, unsigned short **y){**x-=**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
-int mul_op(unsigned short ** x, unsigned short **y){**x*=**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
-int div_op(unsigned short ** x, unsigned short **y){**x/=**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
-int and_op(unsigned short ** x, unsigned short **y){**x=**x&**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
-int or_op(unsigned short ** x, unsigned short **y) {**x=**x|**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
-int xor_op(unsigned short ** x, unsigned short **y){**x=**x^**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
-int not_op(unsigned short ** x, unsigned short **y){**x=~(**x);INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
-int mod_op(unsigned short ** x, unsigned short **y){**x%=**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
-int rem_op(unsigned short ** x, unsigned short **y){**x/=**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
-int srl_op(unsigned short ** x, unsigned short **y){**x=**x>>**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
-int sll_op(unsigned short ** x, unsigned short **y){**x=**x<<**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
-int sra_op(unsigned short ** x, unsigned short **y){**x=**x>>**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
-int sla_op(unsigned short ** x, unsigned short **y){**x=**x<<**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
+int set_op(unsigned short ** x, unsigned short **y){**x=**y;return 0;}
+int add_op(unsigned short ** x, unsigned short **y){**x+=**y;return 0;}
+int sub_op(unsigned short ** x, unsigned short **y){**x-=**y;return 0;}
+int mul_op(unsigned short ** x, unsigned short **y){**x*=**y;return 0;}
+int div_op(unsigned short ** x, unsigned short **y){**x/=**y;return 0;}
+int and_op(unsigned short ** x, unsigned short **y){**x=**x&**y;return 0;}
+int or_op(unsigned short ** x, unsigned short **y) {**x=**x|**y;return 0;}
+int xor_op(unsigned short ** x, unsigned short **y){**x=**x^**y;return 0;}
+int not_op(unsigned short ** x, unsigned short **y){**x=~(**x);return 0;}
+int mod_op(unsigned short ** x, unsigned short **y){**x%=**y;return 0;}
+int rem_op(unsigned short ** x, unsigned short **y){**x/=**y;return 0;}
+int srl_op(unsigned short ** x, unsigned short **y){**x=**x>>**y;return 0;}
+int sll_op(unsigned short ** x, unsigned short **y){**x=**x<<**y;return 0;}
+int sra_op(unsigned short ** x, unsigned short **y){**x=**x>>**y;return 0;}
+int sla_op(unsigned short ** x, unsigned short **y){**x=**x<<**y;return 0;}
 int ieq_op(unsigned short ** x, unsigned short **y)
 {
-    if(**x == **y) INCREMENT_PC(INSTRUCTION_SIZE);
-    else INCREMENT_PC(INSTRUCTION_SIZE*2);
+    if(**x == **y) return 0;
+    else INCREMENT_PC(INSTRUCTION_SIZE);
     return 0;
 }
 int ine_op(unsigned short ** x, unsigned short **y)
 {
-    if(**x != **y) INCREMENT_PC(INSTRUCTION_SIZE);
-    else INCREMENT_PC(INSTRUCTION_SIZE*2);
+    if(**x != **y) return 0;
+    else INCREMENT_PC(INSTRUCTION_SIZE);
     return 0;
 }
 int ige_op(unsigned short ** x, unsigned short **y)
 {
-    if(**x >= **y) INCREMENT_PC(INSTRUCTION_SIZE);
-    else INCREMENT_PC(INSTRUCTION_SIZE*2);
+    if(**x >= **y) return 0;
+    else INCREMENT_PC(INSTRUCTION_SIZE);
     return 0;
 }
 int igt_op(unsigned short ** x, unsigned short **y)
 {
-    if(**x > **y) INCREMENT_PC(INSTRUCTION_SIZE);
-    else INCREMENT_PC(INSTRUCTION_SIZE*2);
+    if(**x > **y) return 0;
+    else INCREMENT_PC(INSTRUCTION_SIZE);
     return 0;
 }
 int ilt_op(unsigned short ** x, unsigned short **y)
 {
-    if(**x < **y) INCREMENT_PC(INSTRUCTION_SIZE);
-    else INCREMENT_PC(INSTRUCTION_SIZE*2);
+    if(**x < **y) return 0;
+    else INCREMENT_PC(INSTRUCTION_SIZE);
     return 0;
 }
 int ile_op(unsigned short ** x, unsigned short **y)
 {
-    if(**x <= **y) INCREMENT_PC(INSTRUCTION_SIZE);
-    else INCREMENT_PC(INSTRUCTION_SIZE*2);
+    if(**x <= **y) return 0;
+    else INCREMENT_PC(INSTRUCTION_SIZE);
     return 0;
 }
 int ibs_op(unsigned short ** x, unsigned short **y)
 {
     // Skip over the next word if x isn't greater than or equal to y
-    if(**x && **y) INCREMENT_PC(INSTRUCTION_SIZE);
-    else INCREMENT_PC(INSTRUCTION_SIZE*2);
+    if(**x && **y) return 0;
+    else INCREMENT_PC(INSTRUCTION_SIZE);
     return 0;
 }
 int inb_op(unsigned short ** x, unsigned short **y)
 {
     // Skip over the next word if x isn't greater than or equal to y
-    if(!(**x && **y)) INCREMENT_PC(INSTRUCTION_SIZE);
-    else INCREMENT_PC(INSTRUCTION_SIZE*2);
+    if(!(**x && **y)) return 0;
+    else INCREMENT_PC(INSTRUCTION_SIZE);
     return 0;
 }
 int jmp_op(unsigned short ** x, unsigned short **y)
@@ -208,23 +204,22 @@ int execute_prog()
     // Run the FDE cycle
     while(1)
     {
-        printf("%x\n",GET_PC());
         // Ensure we cannot go out of bounds in memory
         if(GET_PC()<0 || GET_PC()>MEM_SIZE) break;
         unsigned short bytecode=get_next_bytecode();
+        INCREMENT_PC(WORD_SIZE);
         // Get the opcode and the x and y values
         unsigned char op=bytecode&0x3F,x=(bytecode>>6)&0x1F,y=(bytecode>>11)&0x1F;
         unsigned short source_immediate=0,dest_immediate=0;
         // x is always a destination, and never a value
         unsigned short * source_pointer=&source_immediate;
         unsigned short * dest_pointer=&dest_immediate;
-        int skip_word_count=0;
         // Check if we need an immediate value for x and y, and if so set it
-        get_immediate_value(x, &source_pointer, 1, &skip_word_count);
-        get_immediate_value(y, &dest_pointer,0, &skip_word_count);
-        // Check how many immediate words were after the bytecode word, and increment the PC accordingly
-        if(skip_word_count==0) INCREMENT_PC(WORD_SIZE); else (INCREMENT_PC(WORD_SIZE*skip_word_count));
-        if(op==NIL || bytecode==NIL) break;
+        get_immediate_value(x, &source_pointer, 1);
+        INCREMENT_PC(WORD_SIZE);
+        get_immediate_value(y, &dest_pointer,0);
+        INCREMENT_PC(WORD_SIZE);
+        if(op==NIL)break;
         // Call the relevant opcode function
         (*opcode_functions[op]) (&source_pointer, &dest_pointer);
         // Check if the ir register is non 0
@@ -243,14 +238,11 @@ int setup_emulator()
     unsigned short memory_counter = TEXT_ADDR;
     int i=0;
     unsigned char previous_op=NIL;
-    // Currently, we have to loop over every bytecode
-    // This is becuase a 0x0 could be an integer value, and not NOP operation :(
-    while(1)
+    // Loop over every bytecode in the bytecode array
+    while(i<MAX_PROG_LEN)
     {
         // Get the lower 8 bits of the bytecode and write it to the next memory address
         unsigned char lower = (bytecode[i])&0xFF;
-        // Check if we have reached a NIL instruction
-        if(previous_op==NIL && lower==NIL) break;
         memory[memory_counter]=lower;
         memory_counter+=1;
         // printf("Written to memory location %x: %x\n",memory_counter,lower);

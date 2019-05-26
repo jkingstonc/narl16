@@ -23,6 +23,7 @@ char * get_op_str(char op_index)
 // Convert an xy value to a string
 char * get_xy_str(char val, char ** str_ptr, int * byte_counter)
 {
+    (*byte_counter)++;
     // Check if the value is a register, if so copy the register string constant from the headder
     if(val>=0 && val<=16) *str_ptr=strdup(reg_str[val]);
     // Check if the value is a stack operation
@@ -35,14 +36,12 @@ char * get_xy_str(char val, char ** str_ptr, int * byte_counter)
         }
     }
     // Check if the value is a signed immediate
-    else if(val==20) {(*byte_counter)++;sprintf(*str_ptr, "%x", bytecode[*byte_counter]);}
+    else if(val==20) {sprintf(*str_ptr, "%x", bytecode[*byte_counter]);}
     // Check if the value is an unsigned immediate
-    else if(val==21) {(*byte_counter)++;sprintf(*str_ptr, "%x", bytecode[*byte_counter]);}
+    else if(val==21) {sprintf(*str_ptr, "%x", bytecode[*byte_counter]);}
     // Check if the value is a memory immediate index
     else if(val==23) 
     {
-        // Increase the counter to get the next word
-        (*byte_counter)++;
         // Copy the relevant formatting and the index to a new string
         char * new_str=(char*)malloc(sizeof(char)*1);
         strcpy(new_str, "[0x");
@@ -55,8 +54,6 @@ char * get_xy_str(char val, char ** str_ptr, int * byte_counter)
     }
     // Check if the value is a memory register index
     else if(val==24) {
-        // Increase the counter to get the next word
-        (*byte_counter)++;
         // Copy the relevant formatting, and get the register string to a new string
         char * new_str=(char*)malloc(sizeof(char));
         strcpy(new_str, "[");
@@ -67,8 +64,6 @@ char * get_xy_str(char val, char ** str_ptr, int * byte_counter)
     }
     // Check if the value is a memory stack operation index
     else if(val==25) {
-        // Increase the counter to get the next word
-        (*byte_counter)++;
         // Copy the relevant formatting, and get the register string to a new string
         char * new_str=(char*)malloc(sizeof(char));
         strcpy(new_str, "[");
@@ -103,8 +98,9 @@ int dissasemble_prog()
         // Get the strings for the x and y value
         get_xy_str(x,&x_str, &byte_counter);
         get_xy_str(y,&y_str, &byte_counter);
-        if(previous_op!=NIL){printf("%s %s %s\n",get_op_str(op),x_str,y_str);line_counter+=1;}
+        if(previous_op!=NIL)printf("%s %s %s\n",get_op_str(op),x_str,y_str);
         byte_counter++;
+        line_counter+=1;
     }
     return 0;
 }

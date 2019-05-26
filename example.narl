@@ -1,13 +1,17 @@
-# dat loop_count 50     ; how many times we should loop
-# dat done 1            ; signify we are done
-
-SET r1, 1
+# dat ammount 8
+SET r1, 0       ; the counter
+SET r2, 0       ; previous previous number
+SET r3, 0       ; previous number
+SET r4, 1       ; current number
 # loop
-ILT r1, loop_count
-    JMP add
+ILT r1, ammount
+JMP add
 JMP end
 # add
-ADD r1, 1
+ADD r1, 1       ; increase counter
+SET r2, r3
+SET r3, r4
+SET r4, r2
+ADD r4, r3
 JMP loop
 # end
-SET r2, done

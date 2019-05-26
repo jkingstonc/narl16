@@ -24,7 +24,7 @@ Relevant information about the ISA
 #define OS_ADDR 0x0
 #define MEM_SIZE 0x10000
 
-#define MAX_PROG_LEN 256
+#define MAX_PROG_LEN 1024
 #define MAX_LINE_LEN 128
 
 #define MAX_OP 30

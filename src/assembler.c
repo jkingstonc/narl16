@@ -185,7 +185,7 @@ int check_is_label(char * str)
         {   
             return LINE_TO_ADDR(i-macro_counter);
         }
-        // // If we are on a macro line, we want to skip it as it doesn't count as an address line
+        // If we are on a macro line, we want to skip it as it doesn't count as an address line
         if(strstr(original_prog[i], "#") != NULL) macro_counter++;
         i++;
     }
@@ -354,14 +354,10 @@ int make_bytecode()
         // Insert optional multi-word immediates
         if(sx_flag){insert_bytecode_array(&bytecode_array,sx); word_counter++;}
         else if(usx_flag){insert_bytecode_array(&bytecode_array,usx); word_counter++;}
+        else insert_bytecode_array(&bytecode_array,(unsigned short)0x0);
         if(sy_flag){insert_bytecode_array(&bytecode_array,sy); word_counter++;}
         else if(usy_flag){insert_bytecode_array(&bytecode_array,usy); word_counter++;}
-        // Insert a bytecode value of 0 for extra
-        while(word_counter<3)
-        { 
-            insert_bytecode_array(&bytecode_array,(unsigned short)0x0);
-            word_counter++;
-        }
+        else insert_bytecode_array(&bytecode_array,(unsigned short)0x0);
 	}
     // Insert a NOP opeartor to the end
     insert_bytecode_array(&bytecode_array,(unsigned short) 0x0);
