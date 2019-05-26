@@ -12,9 +12,10 @@ Relevant information about the ISA
 
 // Word size in bytes
 #define WORD_SIZE 2
+// Instruction size in bytes
+#define INSTRUCTION_SIZE 6
 
 // Base address for memory locations
-
 #define VIDEO_ADDR 0xF000
 #define STACK_ADDR 0xE000
 #define HEAP_ADDR 0x8000
@@ -38,7 +39,7 @@ Relevant information about the ISA
 #define CR 3
 
 // Macro to convert a line number to a text address position
-#define LINE_TO_ADDR(line) (TEXT_ADDR+((line)*(2)))
+#define LINE_TO_ADDR(line) ((TEXT_ADDR)+((line)*(INSTRUCTION_SIZE)))
 
 // Strings corresponding to indexes of opcodes
 const char *opcodes[] = 

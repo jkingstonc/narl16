@@ -24,8 +24,8 @@ NARL16 is capable of addressing 2^16 memory indexes
 The following available registers are:
 --------------------------------------
 
-* pc sp ia cr r1-12
-* program counter, stack pointer, interupt address, cause register, registers 1-12
+* pc sp ir cr r1-12
+* program counter, stack pointer, interupt index, cause register, registers 1-12
 
 The memory layout is as follows:
 --------------------------------
@@ -35,11 +35,11 @@ The memory layout is as follows:
 |------------------------|
 |  \/ stack:  0xE000     |
 |------------------------|
-|  /\ heap:   0x7000     |
+|  /\ heap:   0x8000     |
 |------------------------|
-|  /\ Static: 0x6000     |
+|  /\ Static: 0x7000     |
 |------------------------|
-|  /\ text:   0x2000     |
+|  /\ text:   0x4000     |
 |------------------------|
 |     System Reserved    |
 
@@ -48,7 +48,7 @@ Instructions
 ============
 
 * Instructions are all 16 bit values using little endian, the lower 8 bits are stored in a lower address memory than the upper 8
-* Each instruction takes up 2 words in memory, the lower for the opcodes, the higher for an immediate
+* Each instruction takes up 3 words in memory, the lower for the opcodes, the next 2 higher for immediates
 
 yyyyyxxxxx000000
 
@@ -148,6 +148,12 @@ Opcode table:
 |  0x1E | INT  | Call an interrupt, push PC then set it to $ia                               |
 ----------------------------------------------------------------------------------------------
 
+
+interrupts
+==========
+
+Every instruction cycle, the processor checks for interrupts from hardware (or software such as SYS calls).
+The CPU will perform a linked jump to the specified Interrupt Service Routine that is found by indexing the ISR table.
 
 
 Flags

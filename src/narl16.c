@@ -110,69 +110,69 @@ int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag,
 // Functions for opcode operations
 int res_op(unsigned short ** x, unsigned short **y){return 0;}
 int nop_op(unsigned short ** x, unsigned short **y){return 0;}
-int set_op(unsigned short ** x, unsigned short **y){**x=**y;INCREMENT_PC(WORD_SIZE);return 0;}
-int add_op(unsigned short ** x, unsigned short **y){**x+=**y;INCREMENT_PC(WORD_SIZE);return 0;}
-int sub_op(unsigned short ** x, unsigned short **y){**x-=**y;INCREMENT_PC(WORD_SIZE);return 0;}
-int mul_op(unsigned short ** x, unsigned short **y){**x*=**y;INCREMENT_PC(WORD_SIZE);return 0;}
-int div_op(unsigned short ** x, unsigned short **y){**x/=**y;INCREMENT_PC(WORD_SIZE);return 0;}
-int and_op(unsigned short ** x, unsigned short **y){**x=**x&**y;INCREMENT_PC(WORD_SIZE);return 0;}
-int or_op(unsigned short ** x, unsigned short **y) {**x=**x|**y;INCREMENT_PC(WORD_SIZE);return 0;}
-int xor_op(unsigned short ** x, unsigned short **y){**x=**x^**y;INCREMENT_PC(WORD_SIZE);return 0;}
-int not_op(unsigned short ** x, unsigned short **y){**x=~(**x);INCREMENT_PC(WORD_SIZE);return 0;}
-int mod_op(unsigned short ** x, unsigned short **y){**x%=**y;INCREMENT_PC(WORD_SIZE);return 0;}
-int rem_op(unsigned short ** x, unsigned short **y){**x/=**y;INCREMENT_PC(WORD_SIZE);return 0;}
-int srl_op(unsigned short ** x, unsigned short **y){**x=**x>>**y;INCREMENT_PC(WORD_SIZE);return 0;}
-int sll_op(unsigned short ** x, unsigned short **y){**x=**x<<**y;INCREMENT_PC(WORD_SIZE);return 0;}
-int sra_op(unsigned short ** x, unsigned short **y){**x=**x>>**y;INCREMENT_PC(WORD_SIZE);return 0;}
-int sla_op(unsigned short ** x, unsigned short **y){**x=**x<<**y;INCREMENT_PC(WORD_SIZE);return 0;}
+int set_op(unsigned short ** x, unsigned short **y){**x=**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
+int add_op(unsigned short ** x, unsigned short **y){**x+=**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
+int sub_op(unsigned short ** x, unsigned short **y){**x-=**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
+int mul_op(unsigned short ** x, unsigned short **y){**x*=**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
+int div_op(unsigned short ** x, unsigned short **y){**x/=**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
+int and_op(unsigned short ** x, unsigned short **y){**x=**x&**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
+int or_op(unsigned short ** x, unsigned short **y) {**x=**x|**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
+int xor_op(unsigned short ** x, unsigned short **y){**x=**x^**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
+int not_op(unsigned short ** x, unsigned short **y){**x=~(**x);INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
+int mod_op(unsigned short ** x, unsigned short **y){**x%=**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
+int rem_op(unsigned short ** x, unsigned short **y){**x/=**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
+int srl_op(unsigned short ** x, unsigned short **y){**x=**x>>**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
+int sll_op(unsigned short ** x, unsigned short **y){**x=**x<<**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
+int sra_op(unsigned short ** x, unsigned short **y){**x=**x>>**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
+int sla_op(unsigned short ** x, unsigned short **y){**x=**x<<**y;INCREMENT_PC(INSTRUCTION_SIZE);return 0;}
 int ieq_op(unsigned short ** x, unsigned short **y)
 {
-    if(**x == **y) INCREMENT_PC(WORD_SIZE);
-    else INCREMENT_PC(WORD_SIZE*2);
+    if(**x == **y) INCREMENT_PC(INSTRUCTION_SIZE);
+    else INCREMENT_PC(INSTRUCTION_SIZE*2);
     return 0;
 }
 int ine_op(unsigned short ** x, unsigned short **y)
 {
-    if(**x != **y) INCREMENT_PC(WORD_SIZE);
-    else INCREMENT_PC(WORD_SIZE*2);
+    if(**x != **y) INCREMENT_PC(INSTRUCTION_SIZE);
+    else INCREMENT_PC(INSTRUCTION_SIZE*2);
     return 0;
 }
 int ige_op(unsigned short ** x, unsigned short **y)
 {
-    if(**x >= **y) INCREMENT_PC(WORD_SIZE);
-    else INCREMENT_PC(WORD_SIZE*2);
+    if(**x >= **y) INCREMENT_PC(INSTRUCTION_SIZE);
+    else INCREMENT_PC(INSTRUCTION_SIZE*2);
     return 0;
 }
 int igt_op(unsigned short ** x, unsigned short **y)
 {
-    if(**x > **y) INCREMENT_PC(WORD_SIZE);
-    else INCREMENT_PC(WORD_SIZE*2);
+    if(**x > **y) INCREMENT_PC(INSTRUCTION_SIZE);
+    else INCREMENT_PC(INSTRUCTION_SIZE*2);
     return 0;
 }
 int ilt_op(unsigned short ** x, unsigned short **y)
 {
-    if(**x < **y) INCREMENT_PC(WORD_SIZE);
-    else INCREMENT_PC(WORD_SIZE*2);
+    if(**x < **y) INCREMENT_PC(INSTRUCTION_SIZE);
+    else INCREMENT_PC(INSTRUCTION_SIZE*2);
     return 0;
 }
 int ile_op(unsigned short ** x, unsigned short **y)
 {
-    if(**x <= **y) INCREMENT_PC(WORD_SIZE);
-    else INCREMENT_PC(WORD_SIZE*2);
+    if(**x <= **y) INCREMENT_PC(INSTRUCTION_SIZE);
+    else INCREMENT_PC(INSTRUCTION_SIZE*2);
     return 0;
 }
 int ibs_op(unsigned short ** x, unsigned short **y)
 {
     // Skip over the next word if x isn't greater than or equal to y
-    if(**x && **y) INCREMENT_PC(WORD_SIZE);
-    else INCREMENT_PC(WORD_SIZE*2);
+    if(**x && **y) INCREMENT_PC(INSTRUCTION_SIZE);
+    else INCREMENT_PC(INSTRUCTION_SIZE*2);
     return 0;
 }
 int inb_op(unsigned short ** x, unsigned short **y)
 {
     // Skip over the next word if x isn't greater than or equal to y
-    if(!(**x && **y)) INCREMENT_PC(WORD_SIZE);
-    else INCREMENT_PC(WORD_SIZE*2);
+    if(!(**x && **y)) INCREMENT_PC(INSTRUCTION_SIZE);
+    else INCREMENT_PC(INSTRUCTION_SIZE*2);
     return 0;
 }
 int jmp_op(unsigned short ** x, unsigned short **y)

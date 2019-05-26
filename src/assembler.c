@@ -183,8 +183,7 @@ int check_is_label(char * str)
         // We have found the label as a substring to the line
         if(strstr(original_prog[i], lbl) != NULL && strchr(original_prog[i], '#') != NULL)
         {   
-            // As each word is 2 bytes, we multiply by 2
-            return LINE_TO_ADDR((i*2) - (macro_counter*2));
+            return LINE_TO_ADDR(i-macro_counter);
         }
         // // If we are on a macro line, we want to skip it as it doesn't count as an address line
         if(strstr(original_prog[i], "#") != NULL) macro_counter++;
@@ -351,13 +350,18 @@ int make_bytecode()
         num_words[line_counter]=1;
         // Insert the bytecode to the bytecode array
         insert_bytecode_array(&bytecode_array,bytecode);
+        int word_counter=1;
         // Insert optional multi-word immediates
-        if(sx_flag)insert_bytecode_array(&bytecode_array,sx);
-        else if(usx_flag)insert_bytecode_array(&bytecode_array,usx);
-        if(sy_flag)insert_bytecode_array(&bytecode_array,sy);
-        else if(usy_flag)insert_bytecode_array(&bytecode_array,usy);
+        if(sx_flag){insert_bytecode_array(&bytecode_array,sx); word_counter++;}
+        else if(usx_flag){insert_bytecode_array(&bytecode_array,usx); word_counter++;}
+        if(sy_flag){insert_bytecode_array(&bytecode_array,sy); word_counter++;}
+        else if(usy_flag){insert_bytecode_array(&bytecode_array,usy); word_counter++;}
         // Insert a bytecode value of 0 for extra
-        if(!sx_flag && !usx_flag && !sy_flag && !usy_flag)insert_bytecode_array(&bytecode_array,(unsigned short)0x0);
+        while(word_counter<3)
+        { 
+            insert_bytecode_array(&bytecode_array,(unsigned short)0x0);
+            word_counter++;
+        }
 	}
     // Insert a NOP opeartor to the end
     insert_bytecode_array(&bytecode_array,(unsigned short) 0x0);

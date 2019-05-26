@@ -21,7 +21,7 @@ char * get_op_str(char op_index)
 }
 
 // Convert an xy value to a string
-char * get_xy_str(char val, char ** str_ptr, int * line_counter)
+char * get_xy_str(char val, char ** str_ptr, int * byte_counter)
 {
     // Check if the value is a register, if so copy the register string constant from the headder
     if(val>=0 && val<=16) *str_ptr=strdup(reg_str[val]);
@@ -35,19 +35,19 @@ char * get_xy_str(char val, char ** str_ptr, int * line_counter)
         }
     }
     // Check if the value is a signed immediate
-    else if(val==20) {(*line_counter)++;sprintf(*str_ptr, "%x", bytecode[*line_counter]);}
+    else if(val==20) {(*byte_counter)++;sprintf(*str_ptr, "%x", bytecode[*byte_counter]);}
     // Check if the value is an unsigned immediate
-    else if(val==21) {(*line_counter)++;sprintf(*str_ptr, "%x", bytecode[*line_counter]);}
+    else if(val==21) {(*byte_counter)++;sprintf(*str_ptr, "%x", bytecode[*byte_counter]);}
     // Check if the value is a memory immediate index
     else if(val==23) 
     {
         // Increase the counter to get the next word
-        (*line_counter)++;
+        (*byte_counter)++;
         // Copy the relevant formatting and the index to a new string
         char * new_str=(char*)malloc(sizeof(char)*1);
         strcpy(new_str, "[0x");
         char new_num[MAX_LINE_LEN];
-        sprintf(new_num, "%x", bytecode[*line_counter]);
+        sprintf(new_num, "%x", bytecode[*byte_counter]);
         strcat(new_str, new_num);
         strcat(new_str, "]");
         *str_ptr=new_str;
@@ -56,11 +56,11 @@ char * get_xy_str(char val, char ** str_ptr, int * line_counter)
     // Check if the value is a memory register index
     else if(val==24) {
         // Increase the counter to get the next word
-        (*line_counter)++;
+        (*byte_counter)++;
         // Copy the relevant formatting, and get the register string to a new string
         char * new_str=(char*)malloc(sizeof(char));
         strcpy(new_str, "[");
-        char * new_num=strdup(reg_str[bytecode[*line_counter]]);
+        char * new_num=strdup(reg_str[bytecode[*byte_counter]]);
         strcat(new_str, new_num);
         strcat(new_str, "]");
         *str_ptr=new_str;
@@ -68,11 +68,11 @@ char * get_xy_str(char val, char ** str_ptr, int * line_counter)
     // Check if the value is a memory stack operation index
     else if(val==25) {
         // Increase the counter to get the next word
-        (*line_counter)++;
+        (*byte_counter)++;
         // Copy the relevant formatting, and get the register string to a new string
         char * new_str=(char*)malloc(sizeof(char));
         strcpy(new_str, "[");
-        char * new_num=strdup(xy_funcs[bytecode[*line_counter]-17]);
+        char * new_num=strdup(xy_funcs[bytecode[*byte_counter]-17]);
         strcat(new_str, new_num);
         strcat(new_str, "]");
         *str_ptr=new_str;
@@ -87,25 +87,24 @@ char * get_xy_str(char val, char ** str_ptr, int * line_counter)
 int dissasemble_prog()
 {
     unsigned short next_word;
-    int line_counter=0;
+    int byte_counter=0, line_counter=0;
     unsigned char previous_op=NIL;
     while(line_counter<MAX_PROG_LEN)
     {
         // Get the bits for the opcode, x and y value
-        char op = (bytecode[line_counter])&0x3F;
+        char op = (bytecode[byte_counter])&0x3F;
         if(previous_op==NIL && op==NIL) break;
         previous_op=op;
         if (op != 0x0) printf("[%x] ",LINE_TO_ADDR(line_counter));
-        char x = (bytecode[line_counter]>>6)&0x1F;
-        char y = (bytecode[line_counter]>>11)&0x1F;
+        char x = (bytecode[byte_counter]>>6)&0x1F;
+        char y = (bytecode[byte_counter]>>11)&0x1F;
         // Initialise strings that will be printed
         char * op_str=get_op_str(op), *x_str=malloc(sizeof(char)), *y_str=malloc(sizeof(char));
         // Get the strings for the x and y value
-        get_xy_str(x,&x_str, &line_counter);
-        get_xy_str(y,&y_str, &line_counter);
-        if(previous_op!=NIL)printf("%s %s %s\n",get_op_str(op),x_str,y_str);
-        //printf("%s %s %s\n",get_op_str(op),x_str,y_str);
-        line_counter++;
+        get_xy_str(x,&x_str, &byte_counter);
+        get_xy_str(y,&y_str, &byte_counter);
+        if(previous_op!=NIL){printf("%s %s %s\n",get_op_str(op),x_str,y_str);line_counter+=1;}
+        byte_counter++;
     }
     return 0;
 }
