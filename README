@@ -43,6 +43,11 @@ The memory layout is as follows:
 |------------------------|
 |     System Reserved    |
 
+Stack:
+------
+
+* sp always points to the next FREE byte in the stack
+* Lower bytes are pushed first, meaning lower bytes are at higher address space
 
 Instructions
 ============

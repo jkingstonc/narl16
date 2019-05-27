@@ -59,19 +59,35 @@ unsigned short get_next_bytecode()
 
 int push_stack(unsigned short value)
 {
-    memory[GET_SP()]=value;
-    DECREMENT_SP(WORD_SIZE);
+    unsigned short immediate=0;
+    unsigned char lower = (value&0xFF);
+    unsigned char upper = (value>>8);
+    memory[GET_SP()]=lower;
+    DECREMENT_SP(1);
+    memory[GET_SP()]=upper;
+    DECREMENT_SP(1);
 }
+// Pop a word from the stack
 unsigned short pop_stack()
 {
-    unsigned char value = memory[GET_SP()];
-    INCREMENT_SP(WORD_SIZE);
-    return value;
+    unsigned short immediate=0;
+    INCREMENT_SP(1);
+    unsigned char upper = memory[GET_SP()];
+    INCREMENT_SP(1);
+    unsigned char lower = memory[GET_SP()];
+    immediate=(immediate|upper)<<8;
+    immediate|=lower;
+    return immediate;
 }
+// Peek a word from the stack
 unsigned short peek_stack()
 {
-    unsigned char value = memory[GET_SP()];
-    return value;
+    unsigned short immediate=0;
+    unsigned char lower = memory[GET_SP()+1];
+    unsigned char upper = memory[GET_SP()+2];
+    immediate=(immediate|upper)<<8;
+    immediate|=lower;
+    return immediate;
 }
 
 // Either return an immediate value, or a pointer for an immediate location
@@ -80,7 +96,7 @@ int get_immediate_value(int code, unsigned short ** immediate, int pointer_flag)
     // registers
     if (code>=0 && code <=16) { if(pointer_flag) { *immediate=&cpu.registers[code];}else{ **immediate=cpu.registers[code];}}
     // If we are setting a push, set the immediate destination to the next sp value
-    else if(code==17) if(pointer_flag) {DECREMENT_SP(WORD_SIZE); *immediate=(unsigned short *)&(memory[cpu.registers[SP]]); } else { **immediate = 0; }
+    else if(code==17) if(pointer_flag) {*immediate=(unsigned short *)&(memory[cpu.registers[SP]]); DECREMENT_SP(WORD_SIZE); } else { **immediate = 0; }
     // POP
     else if(code==18) {if(!pointer_flag) { **immediate=pop_stack();}}
     // PEEK
@@ -188,7 +204,7 @@ int rtn_op(unsigned short ** x, unsigned short **y)
     return 0;
 }
 int sys_op(unsigned short ** x, unsigned short **y) {return 0;}
-int int_op(unsigned short ** x, unsigned short **y) {return 0;}
+int int_op(unsigned short ** x, unsigned short **y) {cpu.registers[IR]=**x;return 0;}
 
 // Pointers for opcode functions
 int (*opcode_functions[MAX_OP])(unsigned short ** x, unsigned short ** y) = 
@@ -197,6 +213,21 @@ int (*opcode_functions[MAX_OP])(unsigned short ** x, unsigned short ** y) =
     not_op, mod_op, rem_op, srl_op, sll_op, sra_op, sla_op, ieq_op, ine_op, ige_op, 
     igt_op, ilt_op, ile_op, ibs_op, inb_op, jmp_op, jal_op, rtn_op, sys_op, int_op
 };
+
+// Process an interrupt specified in the IR register
+int process_interrupt()
+{
+    // First disable the IR to signal that the interrupt is being handled
+    cpu.registers[IR]=0;
+    // Push the state of the CPU onto the stack
+    int i;
+    for(i=0;i<MAX_REG;i++) push_stack(cpu.registers[i]);
+    // Process the interrupt
+    printf("Interrupt: %x\n", cpu.registers[IR]);
+    // Restore the state of the CPU
+    for(i=MAX_REG-1;i>=0;i--) cpu.registers[i]=pop_stack();
+    return 1;
+}
 
 // Execute the emulator program
 int execute_prog()
@@ -223,7 +254,7 @@ int execute_prog()
         // Call the relevant opcode function
         (*opcode_functions[op]) (&source_pointer, &dest_pointer);
         // Check if the ir register is non 0
-        if(cpu.registers[IR]) printf("Interrupt: %x\n", cpu.registers[IR]);
+        if(cpu.registers[IR]) process_interrupt();
     }
     print_registers();
     // Free relevant memory
